@@ -37,6 +37,63 @@
             min-height: 100vh; 
             text-align: center; 
             padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            animation: float 25s infinite linear;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .particle:nth-child(1) { width: 12px; height: 12px; left: 5%; animation-delay: -0s; animation-duration: 20s; }
+        .particle:nth-child(2) { width: 8px; height: 8px; left: 15%; animation-delay: -2s; animation-duration: 18s; }
+        .particle:nth-child(3) { width: 16px; height: 16px; left: 25%; animation-delay: -4s; animation-duration: 22s; }
+        .particle:nth-child(4) { width: 6px; height: 6px; left: 35%; animation-delay: -6s; animation-duration: 16s; }
+        .particle:nth-child(5) { width: 20px; height: 20px; left: 45%; animation-delay: -8s; animation-duration: 24s; }
+        .particle:nth-child(6) { width: 10px; height: 10px; left: 55%; animation-delay: -10s; animation-duration: 19s; }
+        .particle:nth-child(7) { width: 14px; height: 14px; left: 65%; animation-delay: -12s; animation-duration: 21s; }
+        .particle:nth-child(8) { width: 7px; height: 7px; left: 75%; animation-delay: -14s; animation-duration: 17s; }
+        .particle:nth-child(9) { width: 18px; height: 18px; left: 85%; animation-delay: -16s; animation-duration: 23s; }
+        .particle:nth-child(10) { width: 9px; height: 9px; left: 95%; animation-delay: -18s; animation-duration: 20s; }
+        .particle:nth-child(11) { width: 11px; height: 11px; left: 12%; animation-delay: -3s; animation-duration: 19s; }
+        .particle:nth-child(12) { width: 15px; height: 15px; left: 28%; animation-delay: -7s; animation-duration: 21s; }
+        .particle:nth-child(13) { width: 5px; height: 5px; left: 42%; animation-delay: -11s; animation-duration: 16s; }
+        .particle:nth-child(14) { width: 13px; height: 13px; left: 58%; animation-delay: -15s; animation-duration: 22s; }
+        .particle:nth-child(15) { width: 8px; height: 8px; left: 72%; animation-delay: -5s; animation-duration: 18s; }
+        .particle:nth-child(16) { width: 17px; height: 17px; left: 88%; animation-delay: -9s; animation-duration: 24s; }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(50vh) translateX(20px) rotate(180deg);
+            }
+            90% {
+                opacity: 0.6;
+            }
+            100% {
+                transform: translateY(-100px) translateX(-20px) rotate(360deg);
+                opacity: 0;
+            }
         }
         
         .logo { 
@@ -45,12 +102,23 @@
             font-weight: bold; 
             margin-bottom: 15px; 
             text-shadow: 0 4px 8px rgba(0,0,0,0.3); 
+            position: relative;
+            z-index: 10;
+            animation: titleFloat 6s ease-in-out infinite;
+        }
+        
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
         
         .subtitle { 
             color: rgba(255,255,255,0.9); 
             font-size: clamp(1rem, 3vw, 1.2rem); 
             margin-bottom: 40px; 
+            position: relative;
+            z-index: 10;
+            animation: titleFloat 6s ease-in-out infinite 0.5s;
         }
         
         .bubbles-container { 
@@ -59,12 +127,14 @@
             gap: 20px;
             max-width: 400px;
             width: 100%;
+            position: relative;
+            z-index: 10;
         }
         
         .bubble { 
             aspect-ratio: 1;
-            min-height: 120px;
-            border-radius: 20px; 
+            min-height: 140px;
+            border-radius: 50%; 
             background: rgba(255,255,255,0.15); 
             backdrop-filter: blur(20px); 
             border: 2px solid rgba(255,255,255,0.2); 
@@ -73,19 +143,114 @@
             justify-content: center; 
             align-items: center; 
             cursor: pointer; 
-            transition: all 0.4s ease; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 15px 45px rgba(0,0,0,0.1), 
+                        inset 0 1px 0 rgba(255,255,255,0.2); 
+            animation: bubbleFloat 8s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bubble:nth-child(1) { animation-delay: 0s; }
+        .bubble:nth-child(2) { animation-delay: 1s; }
+        .bubble:nth-child(3) { animation-delay: 2s; }
+        .bubble:nth-child(4) { animation-delay: 3s; }
+        
+        @keyframes bubbleFloat {
+            0%, 100% { 
+                transform: translateY(0px) scale(1); 
+            }
+            25% { 
+                transform: translateY(-20px) scale(1.02); 
+            }
+            50% { 
+                transform: translateY(-15px) scale(1.05); 
+            }
+            75% { 
+                transform: translateY(-25px) scale(1.02); 
+            }
+        }
+        
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(
+                ellipse at 30% 30%,
+                rgba(255,255,255,0.3) 0%,
+                rgba(255,255,255,0.1) 40%,
+                transparent 70%
+            );
+            border-radius: 50%;
+            animation: bubbleShine 6s ease-in-out infinite;
+            opacity: 0.7;
+        }
+        
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: conic-gradient(
+                from 0deg,
+                rgba(255,255,255,0.1),
+                rgba(255,255,255,0.3),
+                rgba(255,255,255,0.1),
+                rgba(255,255,255,0.3),
+                rgba(255,255,255,0.1)
+            );
+            border-radius: 50%;
+            animation: bubbleRotate 15s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+        
+        @keyframes bubbleShine {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 0.7;
+            }
+            50% { 
+                transform: scale(1.1) rotate(10deg);
+                opacity: 0.9;
+            }
+        }
+        
+        @keyframes bubbleRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .bubble:hover::after {
+            opacity: 0.6;
         }
         
         .bubble:hover { 
-            transform: scale(1.05) translateY(-5px); 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2); 
+            transform: scale(1.15) translateY(-12px); 
+            box-shadow: 0 30px 90px rgba(0,0,0,0.25), 
+                        inset 0 1px 0 rgba(255,255,255,0.4),
+                        0 0 0 4px rgba(255,255,255,0.1); 
             background: rgba(255,255,255,0.25); 
+            border-color: rgba(255,255,255,0.4);
         }
         
         .bubble-emoji { 
             font-size: clamp(2rem, 5vw, 3rem); 
             margin-bottom: 8px; 
+            animation: emojiPulse 4s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes emojiPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
         
         .bubble-text { 
@@ -93,6 +258,8 @@
             font-weight: 600; 
             font-size: clamp(12px, 3vw, 16px); 
             text-shadow: 0 2px 4px rgba(0,0,0,0.3); 
+            position: relative;
+            z-index: 2;
         }
         
         .section-screen { 
@@ -510,6 +677,24 @@
 <body>
     <div id="homeScreen" class="screen active">
         <div class="home-screen">
+            <div class="floating-particles">
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+                <div class="particle"></div>
+            </div>
             <div class="logo">Budget Manager Pro</div>
             <div class="subtitle">Gestisci le tue finanze con storico completo</div>
             <div class="bubbles-container">
@@ -923,9 +1108,8 @@
             window.speseGlobali[spesaId] = { importo, desc, categoria };
             console.log(`Aggiornata spesa globale ${spesaId}:`, window.speseGlobali[spesaId]);
             
-            // Salvataggio automatico con debounce
-            clearTimeout(window.saveTimeout);
-            window.saveTimeout = setTimeout(salvaDatiCompleti, 500);
+            // Salvataggio immediato per debug
+            salvaDatiCompleti();
         }
         
         function aggiungiSpesaWeek(settimana) {
@@ -1230,14 +1414,20 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
         }
         
         function salvaDatiCompleti() {
+            const monthKey = getMonthKey();
+            console.log('=== INIZIO SALVATAGGIO ===');
+            console.log('Chiave mese:', monthKey);
+            console.log('Spese globali da salvare:', window.speseGlobali);
+            console.log('Spese settimane da salvare:', speseSettimane);
+            
             const dati = {
                 versione: '3.1',
-                meseChiave: getMonthKey(),
+                meseChiave: monthKey,
                 stipendio: getValue('stipendio'),
                 risparmi: getValue('risparmi'),
                 speseExtra: [],
                 contatore: contatore,
-                speseSettimane: speseSettimane,
+                speseSettimane: { ...speseSettimane },
                 speseDettagliate: { ...window.speseGlobali },
                 contatoreSpese: contatoreSpese,
                 timestamp: new Date().toISOString()
@@ -1250,14 +1440,26 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
                 dati.speseExtra.push({ id, titolo, valore });
             });
             
-            const monthKey = getMonthKey();
-            
             try {
-                localStorage.setItem(`budgetApp_${monthKey}`, JSON.stringify(dati));
-                console.log(`Dati salvati per ${monthKey}:`, dati);
-                return true;
+                const datiString = JSON.stringify(dati);
+                console.log('Stringa JSON da salvare (primi 500 caratteri):', datiString.substring(0, 500));
+                
+                localStorage.setItem(`budgetApp_${monthKey}`, datiString);
+                
+                // Verifica immediata del salvataggio
+                const verificaSalvataggio = localStorage.getItem(`budgetApp_${monthKey}`);
+                if (verificaSalvataggio) {
+                    const datiVerifica = JSON.parse(verificaSalvataggio);
+                    console.log('✓ SALVATAGGIO RIUSCITO! Spese dettagliate salvate:', Object.keys(datiVerifica.speseDettagliate).length);
+                    console.log('✓ Spese settimane salvate:', datiVerifica.speseSettimane);
+                    return true;
+                } else {
+                    console.error('✗ ERRORE: Dati non trovati dopo il salvataggio!');
+                    return false;
+                }
             } catch(e) {
-                console.error('Errore salvataggio:', e);
+                console.error('✗ ERRORE salvataggio:', e);
+                console.error('Dimensione dati:', JSON.stringify(dati).length, 'caratteri');
                 return false;
             }
         }
@@ -1265,6 +1467,21 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
         // Inizializzazione
         document.addEventListener('DOMContentLoaded', function() {
             console.log('=== INIZIALIZZAZIONE APP ===');
+            
+            // Verifica spazio localStorage
+            try {
+                const testKey = 'test_storage_' + Date.now();
+                const testData = 'x'.repeat(1000);
+                localStorage.setItem(testKey, testData);
+                localStorage.removeItem(testKey);
+                console.log('✓ LocalStorage funzionante');
+            } catch(e) {
+                console.error('✗ Problema con localStorage:', e);
+                alert('Attenzione: Problemi con il salvataggio dati. Svuota la cache del browser.');
+            }
+            
+            // Controlla dati esistenti
+            console.log('Tutti i dati localStorage per budget:', Object.keys(localStorage).filter(k => k.startsWith('budgetApp_')));
             
             // Inizializza l'array globale
             window.speseGlobali = {};
@@ -1275,6 +1492,10 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
             
             console.log('App inizializzata. Array globale:', window.speseGlobali);
             console.log('Spese settimane:', speseSettimane);
+            
+            // Test di salvataggio
+            console.log('=== TEST SALVATAGGIO INIZIALE ===');
+            salvaDatiCompleti();
             
             // Registra Service Worker per PWA
             if ('serviceWorker' in navigator) {
@@ -1302,6 +1523,30 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
             }
         });
         
+        function debugLocalStorage() {
+            console.log('=== DEBUG LOCALSTORAGE ===');
+            const monthKey = getMonthKey();
+            const salvati = localStorage.getItem(`budgetApp_${monthKey}`);
+            
+            if (salvati) {
+                const dati = JSON.parse(salvati);
+                console.log('Dati trovati per', monthKey, ':', dati);
+                console.log('Spese dettagliate:', dati.speseDettagliate);
+                console.log('Spese settimane:', dati.speseSettimane);
+            } else {
+                console.log('Nessun dato trovato per', monthKey);
+            }
+            
+            console.log('Tutte le chiavi budget:', Object.keys(localStorage).filter(k => k.startsWith('budgetApp_')));
+            console.log('Stato attuale app:');
+            console.log('- window.speseGlobali:', window.speseGlobali);
+            console.log('- speseSettimane:', speseSettimane);
+        }
+        
+        // Aggiungi al window per debug dalla console
+        window.debugLocalStorage = debugLocalStorage;
+        window.salvaDatiCompleti = salvaDatiCompleti;
+        
         // Salvataggio automatico ogni 30 secondi
         setInterval(function() {
             console.log('Salvataggio automatico...');
@@ -1310,4 +1555,3 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
     </script>
 </body>
 </html>
-
