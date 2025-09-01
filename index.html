@@ -1246,6 +1246,8 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
         }
         
         function generaDatiCompleti() {
+            console.log('=== INIZIO GENERAZIONE DATI ===');
+            
             const dati = {
                 versione: '3.0',
                 meseChiave: getMonthKey(),
@@ -1265,16 +1267,29 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
                 dati.speseExtra.push({ id, titolo, valore });
             });
             
+            // Debug: mostra speseSettimane corrente
+            console.log('speseSettimane array:', speseSettimane);
+            
             // Salva tutte le spese dettagliate presenti nel DOM
             for (let settimana = 1; settimana <= 4; settimana++) {
+                console.log(`=== Processando settimana ${settimana} ===`);
+                
                 const container = document.getElementById(`expenses${settimana}`);
+                console.log(`Container expenses${settimana}:`, container);
+                
                 if (container) {
                     const expenseItems = container.querySelectorAll('.expense-item');
-                    expenseItems.forEach(item => {
+                    console.log(`Trovati ${expenseItems.length} expense-item in settimana ${settimana}`);
+                    
+                    expenseItems.forEach((item, index) => {
                         const spesaId = item.id.replace('exp_', '');
+                        console.log(`Processando expense item ${index + 1}: ${spesaId}`);
+                        
                         const importo = getValue(`amt_${spesaId}`) || '0';
                         const desc = getValue(`desc_${spesaId}`) || '';
                         const categoria = getValue(`cat_${spesaId}`) || 'altro';
+                        
+                        console.log(`  - Importo: "${importo}", Desc: "${desc}", Categoria: "${categoria}"`);
                         
                         dati.speseDettagliate[spesaId] = { importo, desc, categoria };
                         
@@ -1284,13 +1299,18 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
                         }
                         if (!speseSettimane[settimana].includes(spesaId)) {
                             speseSettimane[settimana].push(spesaId);
+                            console.log(`  - Aggiunto ${spesaId} a speseSettimane[${settimana}]`);
                         }
                     });
+                } else {
+                    console.log(`Container expenses${settimana} non trovato`);
                 }
             }
             
-            // Debug: mostra cosa stiamo salvando
-            console.log('Salvando dati:', dati);
+            console.log('=== DATI FINALI GENERATI ===');
+            console.log('Spese dettagliate:', dati.speseDettagliate);
+            console.log('Numero spese dettagliate:', Object.keys(dati.speseDettagliate).length);
+            console.log('speseSettimane finale:', dati.speseSettimane);
             
             return dati;
         }
