@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Manager Pro</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Gestisci il tuo budget mensile e settimanale con facilità">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Budget Manager">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            overflow-x: hidden; 
+            font-size: 14px;
+        }
+        
+        .home-screen { 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            text-align: center; 
+            padding: 20px;
+        }
+        
+        .logo { 
+            color: white; 
+            font-size: clamp(1.8rem, 5vw, 3rem); 
+            font-weight: bold; 
+            margin-bottom: 15px; 
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3); 
+        }
+        
+        .subtitle { 
+            color: rgba(255,255,255,0.9); 
+            font-size: clamp(1rem, 3vw, 1.2rem); 
+            margin-bottom: 40px; 
+        }
+        
+        .bubbles-container { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .bubble { 
+            aspect-ratio: 1;
+            min-height: 120px;
+            border-radius: 20px; 
+            background: rgba(255,255,255,0.15); 
+            backdrop-filter: blur(20px); 
+            border: 2px solid rgba(255,255,255,0.2); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer; 
+            transition: all 0.4s ease; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+        }
+        
+        .bubble:hover { 
+            transform: scale(1.05) translateY(-5px); 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2); 
+            background: rgba(255,255,255,0.25); 
+        }
+        
+        .bubble-emoji { 
+            font-size: clamp(2rem, 5vw, 3rem); 
+            margin-bottom: 8px; 
+        }
+        
+        .bubble-text { 
+            color: white; 
+            font-weight: 600; 
+            font-size: clamp(12px, 3vw, 16px); 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3); 
+        }
+        
+        .section-screen { 
+            display: none; 
+            min-height: 100vh; 
+            padding: 10px;
+        }
+        
+        .section-screen.active { display: block; }
+        
+        .back-button { 
+            position: fixed; 
+            top: 15px; 
+            left: 15px; 
+            width: 50px; 
+            height: 50px; 
+            border-radius: 50%; 
+            background: rgba(255,255,255,0.2); 
+            backdrop-filter: blur(20px); 
+            border: 2px solid rgba(255,255,255,0.3); 
+            color: white; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            z-index: 1000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .back-button:hover { 
+            transform: scale(1.1); 
+            background: rgba(255,255,255,0.3); 
+        }
+        
+        .section-container { 
+            max-width: 600px; 
+            margin: 80px auto 40px; 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(20px); 
+            border-radius: 20px; 
+            padding: 20px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1); 
+        }
+        
+        .month-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+        }
+        
+        .month-nav-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .month-nav-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .current-month {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 18px;
+            min-width: 180px;
+            text-align: center;
+        }
+        
+        .section-title { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 25px; 
+            font-size: clamp(1.3rem, 4vw, 2rem); 
+            font-weight: bold; 
+        }
+        
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        
+        .input-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            color: #2c3e50; 
+            font-size: 14px;
+        }
+        
+        .input-group input { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid #e1e8ed; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            transition: all 0.3s ease; 
+            background: white; 
+        }
+        
+        .input-group input:focus { 
+            border-color: #667eea; 
+            outline: none; 
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
+        }
+        
+        .custom-expense { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+            padding: 12px; 
+            margin: 8px 0; 
+            border-radius: 15px; 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+            flex-wrap: wrap;
+        }
+        
+        .title-input { 
+            flex: 2; 
+            min-width: 120px;
+            padding: 8px 12px; 
+            border: 1px solid #d1d9e6; 
+            border-radius: 8px; 
+            background: white; 
+            font-size: 14px;
+        }
+        
+        .value-input { 
+            flex: 1; 
+            min-width: 80px;
+            padding: 8px 12px; 
+            border: 1px solid #d1d9e6; 
+            border-radius: 8px; 
+            background: white; 
+            font-size: 14px;
+        }
+        
+        .btn { 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 25px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            font-size: 13px; 
+            white-space: nowrap;
+        }
+        
+        .btn-add { 
+            background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(72, 198, 239, 0.4); 
+        }
+        
+        .btn-add:hover { transform: translateY(-2px); }
+        
+        .btn-remove { 
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); 
+            color: white; 
+            padding: 8px 12px; 
+            font-size: 12px; 
+            min-width: auto;
+        }
+        
+        .btn-reset { 
+            background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%); 
+            color: white; 
+            margin: 10px 5px;
+        }
+        
+        .btn-export { 
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); 
+            color: white; 
+            margin: 10px 5px;
+        }
+        
+        .btn-history {
+            background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+            color: white;
+            margin: 10px 5px;
+        }
+        
+        .result-card { 
+            background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); 
+            color: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            text-align: center; 
+            margin: 15px 0; 
+            box-shadow: 0 8px 32px rgba(72, 198, 239, 0.3); 
+        }
+        
+        .result-value { 
+            font-size: clamp(1.5rem, 4vw, 2.5rem); 
+            font-weight: bold; 
+            margin-bottom: 6px; 
+        }
+        
+        .result-label { 
+            opacity: 0.9; 
+            font-size: clamp(0.9rem, 3vw, 1.1rem); 
+        }
+        
+        .week-card { 
+            background: rgba(255,255,255,0.9); 
+            border-radius: 15px; 
+            padding: 15px; 
+            margin: 12px 0; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+            border-left: 5px solid #667eea; 
+        }
+        
+        .week-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px; 
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .week-title { 
+            font-size: clamp(1rem, 3vw, 1.3rem); 
+            font-weight: bold; 
+            color: #2c3e50; 
+        }
+        
+        .week-budget { 
+            font-size: clamp(0.9rem, 3vw, 1.1rem); 
+            font-weight: 600; 
+            color: #667eea; 
+        }
+        
+        .week-details { 
+            display: none; 
+            margin-top: 15px; 
+        }
+        
+        .week-details.active { display: block; }
+        
+        .expense-item { 
+            display: flex; 
+            gap: 6px; 
+            margin: 8px 0; 
+            padding: 10px; 
+            background: white; 
+            border-radius: 10px; 
+            border-left: 4px solid #48c6ef; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            align-items: center; 
+            flex-wrap: wrap;
+        }
+        
+        .expense-amount { 
+            width: 70px; 
+            padding: 6px 8px; 
+            border: 1px solid #e1e8ed; 
+            border-radius: 8px; 
+            font-size: 14px; 
+        }
+        
+        .expense-desc { 
+            flex: 1; 
+            min-width: 100px;
+            padding: 6px 8px; 
+            border: 1px solid #e1e8ed; 
+            border-radius: 8px; 
+            font-size: 13px; 
+        }
+        
+        .expense-category { 
+            width: 90px; 
+            padding: 6px 8px; 
+            border: 1px solid #e1e8ed; 
+            border-radius: 8px; 
+            font-size: 11px; 
+        }
+        
+        .summary-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 12px; 
+            margin: 15px 0; 
+        }
+        
+        .summary-card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 15px; 
+            text-align: center; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+        }
+        
+        .summary-card h3 { 
+            color: #2c3e50; 
+            font-size: 12px; 
+            margin-bottom: 8px; 
+        }
+        
+        .summary-card .value { 
+            font-size: clamp(1.2rem, 3vw, 1.8rem); 
+            font-weight: bold; 
+            color: #667eea; 
+        }
+        
+        .historical-comparison {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #9c27b0;
+        }
+        
+        .comparison-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .comparison-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .negative { color: #ff6b6b !important; }
+        .positive { color: #48c6ef !important; }
+        
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        .button-row { 
+            display: flex; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            margin: 20px 0; 
+        }
+        
+        .week-summary { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 12px; 
+            font-size: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .section-container { 
+                margin: 70px 10px 20px; 
+                padding: 15px; 
+            }
+            
+            .custom-expense {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .title-input, .value-input {
+                flex: none;
+                width: 100%;
+                margin-bottom: 8px;
+            }
+            
+            .expense-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .expense-amount, .expense-desc, .expense-category {
+                width: 100%;
+                margin-bottom: 6px;
+            }
+            
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            .button-row .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+            
+            .week-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .month-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="homeScreen" class="screen active">
+        <div class="home-screen">
+            <div class="logo">Budget Manager Pro</div>
+            <div class="subtitle">Gestisci le tue finanze con storico completo</div>
+            <div class="bubbles-container">
+                <div class="bubble" onclick="goToPage('setupScreen')">
+                    <div class="bubble-emoji">⚙️</div>
+                    <div class="bubble-text">Configurazione</div>
+                </div>
+                <div class="bubble" onclick="goToPage('weeklyScreen')">
+                    <div class="bubble-emoji">📅</div>
+                    <div class="bubble-text">Settimane</div>
+                </div>
+                <div class="bubble" onclick="goToPage('summaryScreen')">
+                    <div class="bubble-emoji">📊</div>
+                    <div class="bubble-text">Riepilogo</div>
+                </div>
+                <div class="bubble" onclick="goToPage('statsScreen')">
+                    <div class="bubble-emoji">📈</div>
+                    <div class="bubble-text">Statistiche</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="setupScreen" class="screen section-screen">
+        <button class="back-button" onclick="goToPage('homeScreen')">←</button>
+        <div class="section-container">
+            <div class="month-selector">
+                <button class="month-nav-btn" onclick="cambiaMese(-1)">‹</button>
+                <div class="current-month" id="currentMonthDisplay"></div>
+                <button class="month-nav-btn" onclick="cambiaMese(1)">›</button>
+            </div>
+            
+            <h1 class="section-title">Configurazione</h1>
+            <div class="input-group">
+                <label>Stipendio Mensile</label>
+                <input type="number" id="stipendio" value="2000" onchange="calcola()">
+            </div>
+            <div class="input-group">
+                <label>Risparmi Fissi</label>
+                <input type="number" id="risparmi" value="400" onchange="calcola()">
+            </div>
+            <div id="speseExtra">
+                <div class="custom-expense">
+                    <input type="text" class="title-input" id="titolo1" placeholder="Es: Auto..." value="Auto" onchange="salva()">
+                    <input type="number" class="value-input" id="valore1" value="500" onchange="calcola()">
+                    <button class="btn btn-remove" onclick="rimuovi(1)">X</button>
+                </div>
+            </div>
+            <div style="text-align: center; margin: 15px 0;">
+                <button class="btn btn-add" onclick="aggiungiNuova()">+ Aggiungi Spesa</button>
+            </div>
+            <div class="result-card">
+                <div class="result-value" id="budgetMensile">€1100</div>
+                <div class="result-label">Budget Mensile Disponibile</div>
+            </div>
+            <div class="result-card">
+                <div class="result-value" id="budgetWeek">€275</div>
+                <div class="result-label">Budget per Settimana</div>
+            </div>
+            <div class="button-row">
+                <button class="btn btn-reset" onclick="resetMese()">Reset Mese</button>
+                <button class="btn btn-export" onclick="esportaMese()">Esporta Mese</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="weeklyScreen" class="screen section-screen">
+        <button class="back-button" onclick="goToPage('homeScreen')">←</button>
+        <div class="section-container">
+            <div class="month-selector">
+                <button class="month-nav-btn" onclick="cambiaMese(-1)">‹</button>
+                <div class="current-month" id="currentMonthDisplayWeekly"></div>
+                <button class="month-nav-btn" onclick="cambiaMese(1)">›</button>
+            </div>
+            
+            <h1 class="section-title">Gestione Settimanale</h1>
+            <div id="weekContainer"></div>
+        </div>
+    </div>
+    
+    <div id="summaryScreen" class="screen section-screen">
+        <button class="back-button" onclick="goToPage('homeScreen')">←</button>
+        <div class="section-container">
+            <div class="month-selector">
+                <button class="month-nav-btn" onclick="cambiaMese(-1)">‹</button>
+                <div class="current-month" id="currentMonthDisplaySummary"></div>
+                <button class="month-nav-btn" onclick="cambiaMese(1)">›</button>
+            </div>
+            
+            <h1 class="section-title">Riepilogo</h1>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Stipendio</h3>
+                    <div class="value" id="riepilogoStipendio">€2000</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Spese Fisse</h3>
+                    <div class="value" id="riepilogoFisse">€900</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Spese Variabili</h3>
+                    <div class="value" id="riepilogoVariabili">€0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Saldo</h3>
+                    <div class="value" id="riepilogoSaldo">€1100</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="statsScreen" class="screen section-screen">
+        <button class="back-button" onclick="goToPage('homeScreen')">←</button>
+        <div class="section-container">
+            <div class="month-selector">
+                <button class="month-nav-btn" onclick="cambiaMese(-1)">‹</button>
+                <div class="current-month" id="currentMonthDisplayStats"></div>
+                <button class="month-nav-btn" onclick="cambiaMese(1)">›</button>
+            </div>
+            
+            <h1 class="section-title">Statistiche</h1>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>Media Settimanale</h3>
+                    <div class="value" id="mediaSpese">€0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Settimana Top</h3>
+                    <div class="value" id="settimanaTop">-</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Settimana Low</h3>
+                    <div class="value" id="settimanaLow">-</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Risparmio %</h3>
+                    <div class="value" id="percentualeRisparmio">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMonth = new Date();
+        let contatore = 1;
+        let speseExtra = [1];
+        let budgetBase = 275;
+        let speseSettimane = { 1: [], 2: [], 3: [], 4: [] };
+        let contatoreSpese = 0;
+        
+        const categorie = {
+            'alimentari': { nome: 'Alimentari', colore: '#4ade80' },
+            'trasporti': { nome: 'Trasporti', colore: '#f59e0b' },
+            'svago': { nome: 'Svago', colore: '#8b5cf6' },
+            'casa': { nome: 'Casa', colore: '#06b6d4' },
+            'salute': { nome: 'Salute', colore: '#ef4444' },
+            'altro': { nome: 'Altro', colore: '#6b7280' }
+        };
+        
+        function getMonthKey() {
+            return `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+        }
+        
+        function formatMonthDisplay(date) {
+            return date.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
+        }
+        
+        function aggiornaDisplayMese() {
+            const monthText = formatMonthDisplay(currentMonth);
+            const displays = ['currentMonthDisplay', 'currentMonthDisplayWeekly', 'currentMonthDisplaySummary', 'currentMonthDisplayStats'];
+            displays.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = monthText;
+            });
+        }
+        
+        function cambiaMese(direction) {
+            salva();
+            currentMonth.setMonth(currentMonth.getMonth() + direction);
+            aggiornaDisplayMese();
+            caricaMese();
+            calcola();
+            
+            const currentScreen = document.querySelector('.screen.active').id;
+            if (currentScreen === 'weeklyScreen') {
+                generaSettimane();
+                aggiornaCalcoliSettimane();
+            } else if (currentScreen === 'summaryScreen') {
+                aggiornaSummary();
+            } else if (currentScreen === 'statsScreen') {
+                aggiornaStats();
+            }
+        }
+        
+        function getValue(id) {
+            const el = document.getElementById(id);
+            return el ? el.value : '0';
+        }
+        
+        function setValue(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        }
+        
+        function goToPage(pagina) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(pagina).classList.add('active');
+            
+            if (pagina === 'weeklyScreen') {
+                generaSettimane();
+                aggiornaCalcoliSettimane();
+            } else if (pagina === 'summaryScreen') {
+                aggiornaSummary();
+            } else if (pagina === 'statsScreen') {
+                aggiornaStats();
+            }
+        }
+        
+        function caricaMese() {
+            const monthKey = getMonthKey();
+            
+            try {
+                const salvati = localStorage.getItem(`budgetApp_${monthKey}`);
+                if (salvati) {
+                    const dati = JSON.parse(salvati);
+                    
+                    if (dati.stipendio) setValue('stipendio', dati.stipendio);
+                    if (dati.risparmi) setValue('risparmi', dati.risparmi);
+                    
+                    contatore = dati.contatore || 1;
+                    contatoreSpese = dati.contatoreSpese || 0;
+                    speseSettimane = dati.speseSettimane || { 1: [], 2: [], 3: [], 4: [] };
+                    
+                    if (dati.speseExtra && dati.speseExtra.length > 0) {
+                        speseExtra = [];
+                        const container = document.getElementById('speseExtra');
+                        container.innerHTML = '';
+                        
+                        dati.speseExtra.forEach(spesa => {
+                            const div = document.createElement('div');
+                            div.className = 'custom-expense';
+                            div.id = `spesa${spesa.id}`;
+                            div.innerHTML = `
+                                <input type="text" class="title-input" id="titolo${spesa.id}" value="${spesa.titolo}" onchange="salva()">
+                                <input type="number" class="value-input" id="valore${spesa.id}" value="${spesa.valore}" onchange="calcola()">
+                                <button class="btn btn-remove" onclick="rimuovi(${spesa.id})">X</button>
+                            `;
+                            container.appendChild(div);
+                            speseExtra.push(spesa.id);
+                        });
+                    }
+                    
+                    return true;
+                } else {
+                    resetDatiDefault();
+                }
+            } catch(e) {
+                resetDatiDefault();
+            }
+            return false;
+        }
+        
+        function resetDatiDefault() {
+            setValue('stipendio', '2000');
+            setValue('risparmi', '400');
+            
+            const container = document.getElementById('speseExtra');
+            container.innerHTML = `
+                <div class="custom-expense">
+                    <input type="text" class="title-input" id="titolo1" placeholder="Es: Auto..." value="Auto" onchange="salva()">
+                    <input type="number" class="value-input" id="valore1" value="500" onchange="calcola()">
+                    <button class="btn btn-remove" onclick="rimuovi(1)">X</button>
+                </div>
+            `;
+            
+            contatore = 1;
+            speseExtra = [1];
+            budgetBase = 275;
+            speseSettimane = { 1: [], 2: [], 3: [], 4: [] };
+            contatoreSpese = 0;
+        }
+        
+        function calcola() {
+            const stipendio = parseFloat(getValue('stipendio')) || 0;
+            const risparmi = parseFloat(getValue('risparmi')) || 0;
+            
+            let totaleExtra = 0;
+            speseExtra.forEach(id => {
+                const valore = parseFloat(getValue(`valore${id}`)) || 0;
+                totaleExtra += valore;
+            });
+            
+            const speseFisse = risparmi + totaleExtra;
+            const budgetDisponibile = stipendio - speseFisse;
+            budgetBase = budgetDisponibile / 4;
+            
+            const budgetMensileEl = document.getElementById('budgetMensile');
+            const budgetWeekEl = document.getElementById('budgetWeek');
+            
+            if (budgetMensileEl) budgetMensileEl.textContent = `€${budgetDisponibile.toFixed(2)}`;
+            if (budgetWeekEl) budgetWeekEl.textContent = `€${budgetBase.toFixed(2)}`;
+            
+            aggiornaCalcoliSettimane();
+            salva();
+        }
+        
+        function generaSettimane() {
+            const container = document.getElementById('weekContainer');
+            container.innerHTML = '';
+            
+            for (let settimana = 1; settimana <= 4; settimana++) {
+                const weekCard = document.createElement('div');
+                weekCard.className = 'week-card';
+                weekCard.innerHTML = `
+                    <div class="week-header">
+                        <div class="week-title">Settimana ${settimana}</div>
+                        <div class="week-budget" id="weekBudget${settimana}">€${budgetBase.toFixed(2)}</div>
+                    </div>
+                    <div class="week-summary">
+                        <span><strong>Speso:</strong> <span id="weekSpent${settimana}" class="positive">€0</span></span>
+                        <span><strong>Saldo:</strong> <span id="weekBalance${settimana}" class="positive">€${budgetBase.toFixed(2)}</span></span>
+                    </div>
+                    <button class="btn btn-add" onclick="toggleWeek(${settimana})" style="width: 100%;">Gestisci Spese</button>
+                    <div id="week${settimana}" class="week-details">
+                        <div id="expenses${settimana}"></div>
+                        <div style="text-align: center; margin-top: 12px;">
+                            <button class="btn btn-add" onclick="aggiungiSpesaWeek(${settimana})">+ Aggiungi Spesa</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(weekCard);
+                
+                caricaSpeseSalvate(settimana);
+            }
+        }
+        
+        function caricaSpeseSalvate(settimana) {
+            const monthKey = getMonthKey();
+            
+            try {
+                const salvati = localStorage.getItem(`budgetApp_${monthKey}`);
+                if (salvati) {
+                    const dati = JSON.parse(salvati);
+                    if (dati.speseDettagliate) {
+                        Object.keys(dati.speseDettagliate).forEach(spesaId => {
+                            if (spesaId.startsWith(`w${settimana}_`)) {
+                                const spesaData = dati.speseDettagliate[spesaId];
+                                if (spesaData.importo !== '0' || spesaData.desc !== '') {
+                                    creaNuovaSpesa(settimana, spesaId, spesaData);
+                                    if (!speseSettimane[settimana]) {
+                                        speseSettimane[settimana] = [];
+                                    }
+                                    if (!speseSettimane[settimana].includes(spesaId)) {
+                                        speseSettimane[settimana].push(spesaId);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch(e) {
+                console.error('Errore caricamento spese:', e);
+            }
+        }
+        
+        function creaNuovaSpesa(settimana, spesaId, spesaData = null) {
+            const container = document.getElementById(`expenses${settimana}`);
+            if (!container) return;
+            
+            const data = spesaData || { importo: '0', desc: '', categoria: 'altro' };
+            const categoria = categorie[data.categoria] || categorie['altro'];
+            
+            const div = document.createElement('div');
+            div.className = 'expense-item';
+            div.id = `exp_${spesaId}`;
+            div.style.borderLeftColor = categoria.colore;
+            div.innerHTML = `
+                <input type="number" class="expense-amount" id="amt_${spesaId}" placeholder="€" value="${data.importo}" oninput="ricalcolaSettimana()" step="0.01" min="0">
+                <input type="text" class="expense-desc" id="desc_${spesaId}" placeholder="Descrizione..." value="${data.desc}" oninput="salva()">
+                <select class="expense-category" id="cat_${spesaId}" onchange="cambiaCategoria('${spesaId}'); salva();">
+                    ${Object.keys(categorie).map(key => `<option value="${key}" ${key === data.categoria ? 'selected' : ''}>${categorie[key].nome}</option>`).join('')}
+                </select>
+                <button class="btn btn-remove" onclick="rimuoviSpesaWeek('${spesaId}', ${settimana})" title="Elimina spesa">X</button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function aggiungiSpesaWeek(settimana) {
+            contatoreSpese++;
+            const spesaId = `w${settimana}_${contatoreSpese}`;
+            
+            if (!speseSettimane[settimana]) {
+                speseSettimane[settimana] = [];
+            }
+            
+            speseSettimane[settimana].push(spesaId);
+            creaNuovaSpesa(settimana, spesaId);
+            salvaImmediato();
+        }
+        
+        function rimuoviSpesaWeek(spesaId, settimana) {
+            const div = document.getElementById(`exp_${spesaId}`);
+            if (!div) return;
+            
+            div.style.transition = 'all 0.3s ease';
+            div.style.opacity = '0.5';
+            div.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                div.remove();
+                if (speseSettimane[settimana]) {
+                    speseSettimane[settimana] = speseSettimane[settimana].filter(id => id !== spesaId);
+                }
+                aggiornaCalcoliSettimane();
+                salva();
+            }, 300);
+        }
+        
+        function cambiaCategoria(spesaId) {
+            const selectEl = document.getElementById(`cat_${spesaId}`);
+            const expenseEl = document.getElementById(`exp_${spesaId}`);
+            
+            if (selectEl && expenseEl) {
+                const nuovaCategoria = selectEl.value;
+                const categoria = categorie[nuovaCategoria];
+                expenseEl.style.borderLeftColor = categoria.colore;
+            }
+        }
+        
+        function toggleWeek(settimana) {
+            const weekEl = document.getElementById(`week${settimana}`);
+            if (weekEl) {
+                weekEl.classList.toggle('active');
+            }
+        }
+        
+        function ricalcolaSettimana() {
+            aggiornaCalcoliSettimane();
+            salva();
+        }
+        
+        function calcolaTotaleSettimana(settimana) {
+            let totale = 0;
+            const container = document.getElementById(`expenses${settimana}`);
+            if (!container) return 0;
+            
+            const inputs = container.querySelectorAll('.expense-amount');
+            inputs.forEach(input => {
+                const valore = parseFloat(input.value) || 0;
+                totale += valore;
+            });
+            
+            return totale;
+        }
+        
+        function aggiornaCalcoliSettimane() {
+            if (!budgetBase || budgetBase <= 0) return;
+            
+            // Calcola tutte le spese una volta
+            const spese = [];
+            for (let i = 1; i <= 4; i++) {
+                spese[i] = calcolaTotaleSettimana(i);
+            }
+            
+            let deficitDaTrasferire = 0;
+            
+            for (let settimana = 1; settimana <= 4; settimana++) {
+                // Il budget di questa settimana è il budget base meno il deficit della settimana precedente
+                let budgetDisponibile = budgetBase - deficitDaTrasferire;
+                
+                const speso = spese[settimana];
+                const saldo = budgetDisponibile - speso;
+                
+                // Se questa settimana va in deficit, trasferiscilo alla prossima
+                if (saldo < 0) {
+                    deficitDaTrasferire = Math.abs(saldo);
+                } else {
+                    deficitDaTrasferire = 0; // Reset del deficit se questa settimana è in pareggio/surplus
+                }
+                
+                // Aggiorna l'interfaccia
+                const weekBudgetEl = document.getElementById(`weekBudget${settimana}`);
+                const weekSpentEl = document.getElementById(`weekSpent${settimana}`);
+                const weekBalanceEl = document.getElementById(`weekBalance${settimana}`);
+                
+                if (weekBudgetEl) {
+                    weekBudgetEl.textContent = `€${budgetDisponibile.toFixed(2)}`;
+                    weekBudgetEl.className = `week-budget ${budgetDisponibile < budgetBase ? 'negative' : 'positive'}`;
+                }
+                
+                if (weekSpentEl) {
+                    weekSpentEl.textContent = `€${speso.toFixed(2)}`;
+                    weekSpentEl.className = speso > budgetDisponibile ? 'negative' : 'positive';
+                }
+                
+                if (weekBalanceEl) {
+                    weekBalanceEl.textContent = `€${saldo.toFixed(2)}`;
+                    weekBalanceEl.className = saldo < 0 ? 'negative' : 'positive';
+                }
+            }
+        }
+        
+        function aggiornaBudgetSettimana(settimana, budget, speso) {
+            const saldo = budget - speso;
+            
+            const weekBudgetEl = document.getElementById(`weekBudget${settimana}`);
+            const weekSpentEl = document.getElementById(`weekSpent${settimana}`);
+            const weekBalanceEl = document.getElementById(`weekBalance${settimana}`);
+            
+            if (weekBudgetEl) {
+                weekBudgetEl.textContent = `€${budget.toFixed(2)}`;
+                weekBudgetEl.className = `week-budget ${budget < budgetBase ? 'negative' : 'positive'}`;
+            }
+            
+            if (weekSpentEl) {
+                weekSpentEl.textContent = `€${speso.toFixed(2)}`;
+                weekSpentEl.className = speso > budget ? 'negative' : 'positive';
+            }
+            
+            if (weekBalanceEl) {
+                weekBalanceEl.textContent = `€${saldo.toFixed(2)}`;
+                weekBalanceEl.className = saldo < 0 ? 'negative' : 'positive';
+            }
+        }
+        
+        function aggiungiNuova() {
+            contatore++;
+            const id = contatore;
+            
+            const div = document.createElement('div');
+            div.className = 'custom-expense';
+            div.id = `spesa${id}`;
+            div.innerHTML = `
+                <input type="text" class="title-input" id="titolo${id}" placeholder="Es: Affitto..." onchange="salva()">
+                <input type="number" class="value-input" id="valore${id}" value="0" onchange="calcola()">
+                <button class="btn btn-remove" onclick="rimuovi(${id})">X</button>
+            `;
+            
+            document.getElementById('speseExtra').appendChild(div);
+            speseExtra.push(id);
+            calcola();
+        }
+        
+        function rimuovi(id) {
+            if (speseExtra.length <= 1) {
+                alert('Devi mantenere almeno una spesa fissa');
+                return;
+            }
+            const div = document.getElementById(`spesa${id}`);
+            if (div) {
+                div.style.transition = 'all 0.3s ease';
+                div.style.opacity = '0.3';
+                div.style.transform = 'scale(0.8)';
+                
+                setTimeout(() => {
+                    div.remove();
+                    speseExtra = speseExtra.filter(item => item !== id);
+                    calcola();
+                }, 300);
+            }
+        }
+        
+        function aggiornaSummary() {
+            const stipendio = parseFloat(getValue('stipendio')) || 0;
+            let speseFisse = parseFloat(getValue('risparmi')) || 0;
+            
+            speseExtra.forEach(id => {
+                speseFisse += parseFloat(getValue(`valore${id}`)) || 0;
+            });
+            
+            let speseVariabili = 0;
+            for (let settimana = 1; settimana <= 4; settimana++) {
+                speseVariabili += calcolaTotaleSettimana(settimana);
+            }
+            
+            const saldo = stipendio - speseFisse - speseVariabili;
+            
+            const riepilogoStipendioEl = document.getElementById('riepilogoStipendio');
+            const riepilogoFisseEl = document.getElementById('riepilogoFisse');
+            const riepilogoVariabiliEl = document.getElementById('riepilogoVariabili');
+            const riepilogoSaldoEl = document.getElementById('riepilogoSaldo');
+            
+            if (riepilogoStipendioEl) riepilogoStipendioEl.textContent = `€${stipendio.toFixed(2)}`;
+            if (riepilogoFisseEl) riepilogoFisseEl.textContent = `€${speseFisse.toFixed(2)}`;
+            if (riepilogoVariabiliEl) riepilogoVariabiliEl.textContent = `€${speseVariabili.toFixed(2)}`;
+            if (riepilogoSaldoEl) {
+                riepilogoSaldoEl.textContent = `€${saldo.toFixed(2)}`;
+                riepilogoSaldoEl.className = `value ${saldo < 0 ? 'negative' : 'positive'}`;
+            }
+        }
+        
+        function aggiornaStats() {
+            const spese = [];
+            for (let i = 1; i <= 4; i++) {
+                spese.push(calcolaTotaleSettimana(i));
+            }
+            
+            const media = spese.reduce((a, b) => a + b, 0) / 4;
+            const max = Math.max(...spese);
+            const min = Math.min(...spese);
+            
+            const stipendio = parseFloat(getValue('stipendio')) || 0;
+            const risparmi = parseFloat(getValue('risparmi')) || 0;
+            const percentuale = stipendio > 0 ? ((risparmi / stipendio) * 100) : 0;
+            
+            const mediaSpesaEl = document.getElementById('mediaSpese');
+            const settimanaTopEl = document.getElementById('settimanaTop');
+            const settimanaLowEl = document.getElementById('settimanaLow');
+            const percentualeRisparmioEl = document.getElementById('percentualeRisparmio');
+            
+            if (mediaSpesaEl) mediaSpesaEl.textContent = `€${media.toFixed(2)}`;
+            if (settimanaTopEl) settimanaTopEl.textContent = max > 0 ? `Sett. ${spese.indexOf(max) + 1}` : '-';
+            if (settimanaLowEl) settimanaLowEl.textContent = min >= 0 ? `Sett. ${spese.indexOf(min) + 1}` : '-';
+            if (percentualeRisparmioEl) percentualeRisparmioEl.textContent = `${percentuale.toFixed(1)}%`;
+        }
+        
+        function resetMese() {
+            if (confirm('Sei sicuro di voler resettare tutti i dati del mese corrente?')) {
+                setValue('stipendio', '2000');
+                setValue('risparmi', '400');
+                
+                const container = document.getElementById('speseExtra');
+                container.innerHTML = `
+                    <div class="custom-expense">
+                        <input type="text" class="title-input" id="titolo1" placeholder="Es: Auto..." value="Auto" onchange="salva()">
+                        <input type="number" class="value-input" id="valore1" value="500" onchange="calcola()">
+                        <button class="btn btn-remove" onclick="rimuovi(1)">X</button>
+                    </div>
+                `;
+                
+                contatore = 1;
+                speseExtra = [1];
+                budgetBase = 275;
+                speseSettimane = { 1: [], 2: [], 3: [], 4: [] };
+                contatoreSpese = 0;
+                
+                calcola();
+                salva();
+                alert('Mese resettato!');
+            }
+        }
+        
+        function esportaMese() {
+            const meseCorrente = formatMonthDisplay(currentMonth);
+            const stipendio = parseFloat(getValue('stipendio')) || 0;
+            let speseFisse = parseFloat(getValue('risparmi')) || 0;
+            
+            speseExtra.forEach(id => {
+                const valore = parseFloat(getValue(`valore${id}`)) || 0;
+                speseFisse += valore;
+            });
+            
+            let speseVariabili = 0;
+            let dettaglioSettimane = '';
+            
+            for (let settimana = 1; settimana <= 4; settimana++) {
+                const totaleSettimana = calcolaTotaleSettimana(settimana);
+                speseVariabili += totaleSettimana;
+                dettaglioSettimane += `\nSETTIMANA ${settimana}: EUR${totaleSettimana.toFixed(2)}`;
+            }
+            
+            const saldoFinale = stipendio - speseFisse - speseVariabili;
+            
+            const report = `BUDGET MANAGER PRO - REPORT ${meseCorrente.toUpperCase()}
+Data: ${new Date().toLocaleString('it-IT')}
+
+RIEPILOGO MENSILE
+Stipendio mensile: EUR${stipendio.toFixed(2)}
+Risparmi fissi: EUR${parseFloat(getValue('risparmi')).toFixed(2)}
+
+SPESE FISSE:
+${speseExtra.map(id => {
+    const titolo = getValue(`titolo${id}`) || 'Spesa';
+    const valore = parseFloat(getValue(`valore${id}`)) || 0;
+    return `- ${titolo}: EUR${valore.toFixed(2)}`;
+}).join('\n')}
+
+Totale spese fisse: EUR${speseFisse.toFixed(2)}
+Totale spese variabili: EUR${speseVariabili.toFixed(2)}
+SALDO FINALE: EUR${saldoFinale.toFixed(2)}
+
+DETTAGLIO SETTIMANALE:${dettaglioSettimane}
+
+STATISTICHE
+Percentuale risparmio: ${stipendio > 0 ? ((parseFloat(getValue('risparmi')) / stipendio) * 100).toFixed(1) : 0}%
+Budget settimanale medio: EUR${budgetBase.toFixed(2)}
+`;
+
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Budget_${getMonthKey()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            alert(`Report per ${meseCorrente} esportato!`);
+        }
+        
+        function generaDatiCompleti() {
+            const dati = {
+                versione: '3.0',
+                meseChiave: getMonthKey(),
+                stipendio: getValue('stipendio'),
+                risparmi: getValue('risparmi'),
+                speseExtra: [],
+                contatore: contatore,
+                speseSettimane: speseSettimane,
+                speseDettagliate: {},
+                contatoreSpese: contatoreSpese,
+                timestamp: new Date().toISOString()
+            };
+            
+            speseExtra.forEach(id => {
+                const titolo = getValue(`titolo${id}`);
+                const valore = getValue(`valore${id}`);
+                dati.speseExtra.push({ id, titolo, valore });
+            });
+            
+            for (let settimana = 1; settimana <= 4; settimana++) {
+                if (speseSettimane[settimana]) {
+                    speseSettimane[settimana].forEach(spesaId => {
+                        const importo = getValue(`amt_${spesaId}`) || '0';
+                        const desc = getValue(`desc_${spesaId}`) || '';
+                        const categoria = getValue(`cat_${spesaId}`) || 'altro';
+                        
+                        dati.speseDettagliate[spesaId] = { importo, desc, categoria };
+                    });
+                }
+            }
+            
+            return dati;
+        }
+        
+        function salva() {
+            const dati = generaDatiCompleti();
+            const monthKey = getMonthKey();
+            
+            try {
+                localStorage.setItem(`budgetApp_${monthKey}`, JSON.stringify(dati));
+                return true;
+            } catch(e) {
+                console.error('Errore salvataggio:', e);
+                return false;
+            }
+        }
+        
+        function salvaImmediato() {
+            setTimeout(salva, 100);
+        }
+        
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            aggiornaDisplayMese();
+            caricaMese();
+            calcola();
+            
+            // Registra Service Worker per PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registrato con successo:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Errore registrazione Service Worker:', error);
+                    });
+            }
+        });
+        
+        // Salvataggio automatico
+        window.addEventListener('beforeunload', salva);
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) salva();
+        });
+        setInterval(salva, 30000);
+    </script>
+</body>
+</html>
