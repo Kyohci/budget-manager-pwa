@@ -266,9 +266,42 @@
             display: none; 
             min-height: 100vh; 
             padding: 10px;
+            position: relative;
+            overflow: hidden;
         }
         
         .section-screen.active { display: block; }
+        
+        .section-floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .section-floating-particles .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            animation: float 25s infinite linear;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .section-floating-particles .particle:nth-child(1) { width: 12px; height: 12px; left: 5%; animation-delay: -0s; animation-duration: 20s; }
+        .section-floating-particles .particle:nth-child(2) { width: 8px; height: 8px; left: 15%; animation-delay: -2s; animation-duration: 18s; }
+        .section-floating-particles .particle:nth-child(3) { width: 16px; height: 16px; left: 25%; animation-delay: -4s; animation-duration: 22s; }
+        .section-floating-particles .particle:nth-child(4) { width: 6px; height: 6px; left: 35%; animation-delay: -6s; animation-duration: 16s; }
+        .section-floating-particles .particle:nth-child(5) { width: 20px; height: 20px; left: 45%; animation-delay: -8s; animation-duration: 24s; }
+        .section-floating-particles .particle:nth-child(6) { width: 10px; height: 10px; left: 55%; animation-delay: -10s; animation-duration: 19s; }
+        .section-floating-particles .particle:nth-child(7) { width: 14px; height: 14px; left: 65%; animation-delay: -12s; animation-duration: 21s; }
+        .section-floating-particles .particle:nth-child(8) { width: 7px; height: 7px; left: 75%; animation-delay: -14s; animation-duration: 17s; }
+        .section-floating-particles .particle:nth-child(9) { width: 18px; height: 18px; left: 85%; animation-delay: -16s; animation-duration: 23s; }
+        .section-floating-particles .particle:nth-child(10) { width: 9px; height: 9px; left: 95%; animation-delay: -18s; animation-duration: 20s; }
+        .section-floating-particles .particle:nth-child(11) { width: 11px; height: 11px; left: 12%; animation-delay: -3s; animation-duration: 19s; }
+        .section-floating-particles .particle:nth-child(12) { width: 15px; height: 15px; left: 28%; animation-delay: -7s; animation-duration: 21s; }
         
         .back-button { 
             position: fixed; 
@@ -303,6 +336,8 @@
             border-radius: 20px; 
             padding: 20px; 
             box-shadow: 0 20px 60px rgba(0,0,0,0.1); 
+            position: relative;
+            z-index: 10;
         }
         
         .month-selector {
@@ -450,8 +485,8 @@
             margin: 10px 5px;
         }
         
-        .btn-history {
-            background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+        .btn-transfer {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
             margin: 10px 5px;
         }
@@ -911,8 +946,19 @@
             // Salva prima di cambiare pagina
             salvaDatiCompleti();
             
+            // Rimuovi particelle esistenti
+            const existingParticles = document.querySelector('.page-particles');
+            if (existingParticles) {
+                existingParticles.remove();
+            }
+            
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(pagina).classList.add('active');
+            
+            // Aggiungi particelle se non è la home
+            if (pagina !== 'homeScreen') {
+                createPageParticles();
+            }
             
             if (pagina === 'weeklyScreen') {
                 generaSettimane();
@@ -922,6 +968,46 @@
             } else if (pagina === 'statsScreen') {
                 aggiornaStats();
             }
+        }
+        
+        function createPageParticles() {
+            const particlesContainer = document.createElement('div');
+            particlesContainer.className = 'page-particles';
+            particlesContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 1;
+            `;
+            
+            // Crea 12 particelle identiche a quelle della home
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    background: rgba(255, 255, 255, 0.08);
+                    border-radius: 50%;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                `;
+                
+                // Dimensioni e posizioni come nella home
+                const sizes = [12, 8, 16, 6, 20, 10, 14, 7, 18, 9, 11, 15];
+                const positions = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 12, 28];
+                const delays = [0, -2, -4, -6, -8, -10, -12, -14, -16, -18, -3, -7];
+                const durations = [20, 18, 22, 16, 24, 19, 21, 17, 23, 20, 19, 21];
+                
+                particle.style.width = sizes[i] + 'px';
+                particle.style.height = sizes[i] + 'px';
+                particle.style.left = positions[i] + '%';
+                particle.style.animation = `float ${durations[i]}s ${delays[i]}s infinite linear`;
+                
+                particlesContainer.appendChild(particle);
+            }
+            
+            document.body.appendChild(particlesContainer);
         }
         
         function caricaMese() {
@@ -1044,6 +1130,7 @@
                         <div id="expenses${settimana}"></div>
                         <div style="text-align: center; margin-top: 12px;">
                             <button class="btn btn-add" onclick="aggiungiSpesaWeek(${settimana})">+ Aggiungi Spesa</button>
+                            <button class="btn btn-transfer" onclick="trasferisciSaldo(${settimana})" style="margin-left: 10px;">💰 Trasferisci Saldo</button>
                         </div>
                     </div>
                 `;
@@ -1209,26 +1296,34 @@
         function aggiornaCalcoliSettimane() {
             if (!budgetBase || budgetBase <= 0) return;
             
+            // Assicurati che l'oggetto trasferimenti esista
+            if (!window.speseGlobali.trasferimenti) {
+                window.speseGlobali.trasferimenti = {};
+            }
+            
             // Calcola tutte le spese una volta
             const spese = [];
             for (let i = 1; i <= 4; i++) {
                 spese[i] = calcolaTotaleSettimana(i);
             }
             
-            let deficitDaTrasferire = 0;
+            let deficitAccumulato = 0;
             
             for (let settimana = 1; settimana <= 4; settimana++) {
-                // Il budget di questa settimana è il budget base meno il deficit della settimana precedente
-                let budgetDisponibile = budgetBase - deficitDaTrasferire;
+                // Budget base + eventuali trasferimenti manuali ricevuti - deficit accumulato dalle settimane precedenti
+                let budgetDisponibile = budgetBase + getTrasferimentiRicevuti(settimana) - deficitAccumulato;
                 
                 const speso = spese[settimana];
-                const saldo = budgetDisponibile - speso;
+                const trasferito = getSaldoTrasferito(settimana);
                 
-                // Se questa settimana va in deficit, trasferiscilo alla prossima
+                // Il saldo è budget disponibile meno speso meno trasferito manualmente
+                const saldo = budgetDisponibile - speso - trasferito;
+                
+                // Se questa settimana va in deficit, accumulalo per la prossima
                 if (saldo < 0) {
-                    deficitDaTrasferire = Math.abs(saldo);
+                    deficitAccumulato = Math.abs(saldo);
                 } else {
-                    deficitDaTrasferire = 0; // Reset del deficit se questa settimana è in pareggio/surplus
+                    deficitAccumulato = 0; // Reset del deficit se questa settimana è in pareggio/surplus
                 }
                 
                 // Aggiorna l'interfaccia
@@ -1237,20 +1332,58 @@
                 const weekBalanceEl = document.getElementById(`weekBalance${settimana}`);
                 
                 if (weekBudgetEl) {
-                    weekBudgetEl.textContent = `€${budgetDisponibile.toFixed(2)}`;
-                    weekBudgetEl.className = `week-budget ${budgetDisponibile < budgetBase ? 'negative' : 'positive'}`;
+                    let testoBudget = `€${budgetDisponibile.toFixed(2)}`;
+                    if (getTrasferimentiRicevuti(settimana) > 0) {
+                        testoBudget += ` (+€${getTrasferimentiRicevuti(settimana).toFixed(2)})`;
+                    }
+                    if (settimana > 1 && (budgetDisponibile < budgetBase + getTrasferimentiRicevuti(settimana))) {
+                        const deficit = budgetBase + getTrasferimentiRicevuti(settimana) - budgetDisponibile;
+                        testoBudget += ` (-€${deficit.toFixed(2)} deficit)`;
+                    }
+                    weekBudgetEl.innerHTML = testoBudget;
+                    weekBudgetEl.className = `week-budget ${budgetDisponibile !== budgetBase ? (budgetDisponibile > budgetBase ? 'positive' : 'negative') : ''}`;
                 }
                 
                 if (weekSpentEl) {
-                    weekSpentEl.textContent = `€${speso.toFixed(2)}`;
-                    weekSpentEl.className = speso > budgetDisponibile ? 'negative' : 'positive';
+                    let testoSpeso = `€${speso.toFixed(2)}`;
+                    if (trasferito > 0) {
+                        testoSpeso += ` (+€${trasferito.toFixed(2)} trasf.)`;
+                    }
+                    weekSpentEl.innerHTML = testoSpeso;
+                    weekSpentEl.className = (speso + trasferito) > budgetDisponibile ? 'negative' : 'positive';
                 }
                 
                 if (weekBalanceEl) {
                     weekBalanceEl.textContent = `€${saldo.toFixed(2)}`;
                     weekBalanceEl.className = saldo < 0 ? 'negative' : 'positive';
                 }
+                
+                // Aggiorna il pulsante di trasferimento - mostra solo se c'è saldo positivo DOPO le spese
+                const transferBtn = document.querySelector(`#week${settimana} .btn-transfer`);
+                if (transferBtn) {
+                    const saldoDisponibile = budgetDisponibile - speso; // Saldo prima dei trasferimenti manuali
+                    if (settimana >= 4 || saldoDisponibile <= 0) {
+                        transferBtn.style.display = 'none';
+                    } else {
+                        transferBtn.style.display = 'inline-block';
+                        transferBtn.textContent = `💰 Trasferisci €${saldoDisponibile.toFixed(2)}`;
+                    }
+                }
             }
+        }
+        
+        function getTrasferimentiRicevuti(settimana) {
+            let ricevuti = 0;
+            
+            if (window.speseGlobali.trasferimenti) {
+                // Trasferimenti manuali dalla settimana precedente
+                const keyManuale = `w${settimana - 1}_to_w${settimana}`;
+                if (window.speseGlobali.trasferimenti[keyManuale]) {
+                    ricevuti += window.speseGlobali.trasferimenti[keyManuale];
+                }
+            }
+            
+            return ricevuti;
         }
         
         function aggiungiNuova() {
@@ -1369,12 +1502,32 @@
             for (let settimana = 1; settimana <= 4; settimana++) {
                 const totaleSettimana = calcolaTotaleSettimana(settimana);
                 speseVariabili += totaleSettimana;
-                dettaglioSettimane += `\nSETTIMANA ${settimana}: EUR${totaleSettimana.toFixed(2)}`;
+                dettaglioSettimane += `\n\nSETTIMANA ${settimana}: EUR${totaleSettimana.toFixed(2)}`;
+                
+                // Aggiungi dettaglio spese per ogni settimana
+                if (speseSettimane[settimana] && speseSettimane[settimana].length > 0) {
+                    dettaglioSettimane += '\n  SPESE DETTAGLIATE:';
+                    speseSettimane[settimana].forEach(spesaId => {
+                        const spesaData = window.speseGlobali[spesaId];
+                        if (spesaData) {
+                            const importo = parseFloat(spesaData.importo) || 0;
+                            const desc = spesaData.desc || 'Senza descrizione';
+                            const categoria = categorie[spesaData.categoria]?.nome || 'Altro';
+                            
+                            if (importo > 0) {
+                                dettaglioSettimane += `\n  - ${desc} (${categoria}): EUR${importo.toFixed(2)}`;
+                            }
+                        }
+                    });
+                } else {
+                    dettaglioSettimane += '\n  Nessuna spesa registrata';
+                }
             }
             
             const saldoFinale = stipendio - speseFisse - speseVariabili;
             
             const report = `BUDGET MANAGER PRO - REPORT ${meseCorrente.toUpperCase()}
+========================================================
 Data: ${new Date().toLocaleString('it-IT')}
 
 RIEPILOGO MENSILE
@@ -1397,6 +1550,12 @@ DETTAGLIO SETTIMANALE:${dettaglioSettimane}
 STATISTICHE
 Percentuale risparmio: ${stipendio > 0 ? ((parseFloat(getValue('risparmi')) / stipendio) * 100).toFixed(1) : 0}%
 Budget settimanale medio: EUR${budgetBase.toFixed(2)}
+Media spese settimanali: EUR${(speseVariabili / 4).toFixed(2)}
+
+CATEGORIE PIU' UTILIZZATE:
+${generaStatisticheCategorie()}
+========================================================
+Generato da Budget Manager Pro
 `;
 
             const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
@@ -1410,7 +1569,43 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             
-            alert(`Report per ${meseCorrente} esportato!`);
+            alert(`Report dettagliato per ${meseCorrente} esportato!`);
+        }
+        
+        function generaStatisticheCategorie() {
+            const categorieStats = {};
+            
+            for (let settimana = 1; settimana <= 4; settimana++) {
+                if (speseSettimane[settimana]) {
+                    speseSettimane[settimana].forEach(spesaId => {
+                        const spesaData = window.speseGlobali[spesaId];
+                        if (spesaData) {
+                            const categoria = spesaData.categoria || 'altro';
+                            const importo = parseFloat(spesaData.importo) || 0;
+                            
+                            if (importo > 0) {
+                                if (!categorieStats[categoria]) {
+                                    categorieStats[categoria] = 0;
+                                }
+                                categorieStats[categoria] += importo;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            const sortedCategorie = Object.entries(categorieStats)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5);
+            
+            if (sortedCategorie.length === 0) {
+                return 'Nessuna spesa registrata';
+            }
+            
+            return sortedCategorie.map(([categoria, totale]) => {
+                const nomeCategoria = categorie[categoria]?.nome || 'Altro';
+                return `- ${nomeCategoria}: EUR${totale.toFixed(2)}`;
+            }).join('\n');
         }
         
         function salvaDatiCompleti() {
@@ -1523,6 +1718,70 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
             }
         });
         
+        function trasferisciSaldo(settimana) {
+            // Non può trasferire dalla settimana 4
+            if (settimana >= 4) {
+                alert('Non è possibile trasferire il saldo dalla settimana 4.');
+                return;
+            }
+            
+            // Calcola il saldo attuale della settimana
+            const spesoSettimana = calcolaTotaleSettimana(settimana);
+            const budgetDisponibile = getBudgetDisponibileSettimana(settimana);
+            const saldo = budgetDisponibile - spesoSettimana;
+            
+            if (saldo <= 0) {
+                alert('Non ci sono fondi rimanenti da trasferire da questa settimana.');
+                return;
+            }
+            
+            const conferma = confirm(`Trasferire €${saldo.toFixed(2)} dalla Settimana ${settimana} alla Settimana ${settimana + 1}?`);
+            
+            if (conferma) {
+                // Salva il trasferimento nei dati
+                if (!window.speseGlobali.trasferimenti) {
+                    window.speseGlobali.trasferimenti = {};
+                }
+                
+                const keyTrasferimento = `w${settimana}_to_w${settimana + 1}`;
+                window.speseGlobali.trasferimenti[keyTrasferimento] = saldo;
+                
+                // Aggiorna i calcoli
+                aggiornaCalcoliSettimane();
+                salvaDatiCompleti();
+                
+                alert(`€${saldo.toFixed(2)} trasferiti con successo dalla Settimana ${settimana} alla Settimana ${settimana + 1}!`);
+            }
+        }
+        
+        function getBudgetDisponibileSettimana(settimana) {
+            let budget = budgetBase;
+            
+            // Aggiungi eventuali trasferimenti ricevuti
+            if (window.speseGlobali.trasferimenti) {
+                Object.keys(window.speseGlobali.trasferimenti).forEach(key => {
+                    if (key === `w${settimana - 1}_to_w${settimana}`) {
+                        budget += window.speseGlobali.trasferimenti[key];
+                    }
+                });
+            }
+            
+            return budget;
+        }
+        
+        function getSaldoTrasferito(settimana) {
+            let trasferito = 0;
+            
+            if (window.speseGlobali.trasferimenti) {
+                const key = `w${settimana}_to_w${settimana + 1}`;
+                if (window.speseGlobali.trasferimenti[key]) {
+                    trasferito = window.speseGlobali.trasferimenti[key];
+                }
+            }
+            
+            return trasferito;
+        }
+        
         function debugLocalStorage() {
             console.log('=== DEBUG LOCALSTORAGE ===');
             const monthKey = getMonthKey();
@@ -1533,6 +1792,7 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
                 console.log('Dati trovati per', monthKey, ':', dati);
                 console.log('Spese dettagliate:', dati.speseDettagliate);
                 console.log('Spese settimane:', dati.speseSettimane);
+                console.log('Trasferimenti:', dati.speseDettagliate?.trasferimenti);
             } else {
                 console.log('Nessun dato trovato per', monthKey);
             }
