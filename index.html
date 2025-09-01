@@ -872,6 +872,11 @@
                     const dati = JSON.parse(salvati);
                     console.log(`Dati completi per settimana ${settimana}:`, dati);
                     
+                    // Inizializza l'array globale se non esiste
+                    if (!window.speseGlobali) {
+                        window.speseGlobali = {};
+                    }
+                    
                     if (dati.speseDettagliate) {
                         console.log(`Spese dettagliate trovate:`, Object.keys(dati.speseDettagliate));
                         
@@ -879,6 +884,9 @@
                             if (spesaId.startsWith(`w${settimana}_`)) {
                                 const spesaData = dati.speseDettagliate[spesaId];
                                 console.log(`Caricando spesa ${spesaId}:`, spesaData);
+                                
+                                // Aggiungi all'array globale
+                                window.speseGlobali[spesaId] = spesaData;
                                 
                                 // Carica tutte le spese, anche quelle con importo 0
                                 creaNuovaSpesa(settimana, spesaId, spesaData);
@@ -902,6 +910,8 @@
                     if (dati.speseSettimane && dati.speseSettimane[settimana]) {
                         speseSettimane[settimana] = [...dati.speseSettimane[settimana]];
                     }
+                    
+                    console.log('Array globale aggiornato:', window.speseGlobali);
                 }
             } catch(e) {
                 console.error('Errore caricamento spese settimana', settimana, ':', e);
@@ -1267,50 +1277,34 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
                 dati.speseExtra.push({ id, titolo, valore });
             });
             
-            // Debug: mostra speseSettimane corrente
-            console.log('speseSettimane array:', speseSettimane);
-            
-            // Salva tutte le spese dettagliate presenti nel DOM
-            for (let settimana = 1; settimana <= 4; settimana++) {
-                console.log(`=== Processando settimana ${settimana} ===`);
-                
-                const container = document.getElementById(`expenses${settimana}`);
-                console.log(`Container expenses${settimana}:`, container);
-                
-                if (container) {
-                    const expenseItems = container.querySelectorAll('.expense-item');
-                    console.log(`Trovati ${expenseItems.length} expense-item in settimana ${settimana}`);
-                    
-                    expenseItems.forEach((item, index) => {
-                        const spesaId = item.id.replace('exp_', '');
-                        console.log(`Processando expense item ${index + 1}: ${spesaId}`);
+            // Usa l'array globale delle spese invece del DOM
+            if (window.speseGlobali) {
+                console.log('Usando speseGlobali:', window.speseGlobali);
+                dati.speseDettagliate = { ...window.speseGlobali };
+            } else {
+                console.log('speseGlobali non trovato, provo il DOM...');
+                // Fallback: prova il DOM solo se i container esistono
+                for (let settimana = 1; settimana <= 4; settimana++) {
+                    const container = document.getElementById(`expenses${settimana}`);
+                    if (container) {
+                        const expenseItems = container.querySelectorAll('.expense-item');
+                        console.log(`Trovati ${expenseItems.length} expense-item in settimana ${settimana}`);
                         
-                        const importo = getValue(`amt_${spesaId}`) || '0';
-                        const desc = getValue(`desc_${spesaId}`) || '';
-                        const categoria = getValue(`cat_${spesaId}`) || 'altro';
-                        
-                        console.log(`  - Importo: "${importo}", Desc: "${desc}", Categoria: "${categoria}"`);
-                        
-                        dati.speseDettagliate[spesaId] = { importo, desc, categoria };
-                        
-                        // Assicurati che l'ID sia nell'array speseSettimane
-                        if (!speseSettimane[settimana]) {
-                            speseSettimane[settimana] = [];
-                        }
-                        if (!speseSettimane[settimana].includes(spesaId)) {
-                            speseSettimane[settimana].push(spesaId);
-                            console.log(`  - Aggiunto ${spesaId} a speseSettimane[${settimana}]`);
-                        }
-                    });
-                } else {
-                    console.log(`Container expenses${settimana} non trovato`);
+                        expenseItems.forEach((item, index) => {
+                            const spesaId = item.id.replace('exp_', '');
+                            const importo = getValue(`amt_${spesaId}`) || '0';
+                            const desc = getValue(`desc_${spesaId}`) || '';
+                            const categoria = getValue(`cat_${spesaId}`) || 'altro';
+                            
+                            dati.speseDettagliate[spesaId] = { importo, desc, categoria };
+                        });
+                    }
                 }
             }
             
             console.log('=== DATI FINALI GENERATI ===');
             console.log('Spese dettagliate:', dati.speseDettagliate);
             console.log('Numero spese dettagliate:', Object.keys(dati.speseDettagliate).length);
-            console.log('speseSettimane finale:', dati.speseSettimane);
             
             return dati;
         }
