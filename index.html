@@ -863,44 +863,41 @@
             
             try {
                 const salvati = localStorage.getItem(`budgetApp_${monthKey}`);
+                console.log(`Caricando settimana ${settimana}, dati trovati:`, salvati ? 'SI' : 'NO');
+                
                 if (salvati) {
                     const dati = JSON.parse(salvati);
+                    console.log(`Dati completi per settimana ${settimana}:`, dati);
+                    
                     if (dati.speseDettagliate) {
+                        console.log(`Spese dettagliate trovate:`, Object.keys(dati.speseDettagliate));
+                        
                         Object.keys(dati.speseDettagliate).forEach(spesaId => {
                             if (spesaId.startsWith(`w${settimana}_`)) {
                                 const spesaData = dati.speseDettagliate[spesaId];
-                                // Carica anche le spese con importo 0 se hanno descrizione
-                                if (parseFloat(spesaData.importo) > 0 || spesaData.desc !== '') {
-                                    creaNuovaSpesa(settimana, spesaId, spesaData);
-                                    if (!speseSettimane[settimana]) {
-                                        speseSettimane[settimana] = [];
-                                    }
-                                    if (!speseSettimane[settimana].includes(spesaId)) {
-                                        speseSettimane[settimana].push(spesaId);
-                                    }
+                                console.log(`Caricando spesa ${spesaId}:`, spesaData);
+                                
+                                // Carica tutte le spese, anche quelle con importo 0
+                                creaNuovaSpesa(settimana, spesaId, spesaData);
+                                
+                                if (!speseSettimane[settimana]) {
+                                    speseSettimane[settimana] = [];
+                                }
+                                if (!speseSettimane[settimana].includes(spesaId)) {
+                                    speseSettimane[settimana].push(spesaId);
                                 }
                             }
                         });
                     }
                     
-                    // Ricostruisci anche l'array speseSettimane dai dati salvati
-                    if (dati.speseSettimane && dati.speseSettimane[settimana]) {
-                        if (!speseSettimane[settimana]) {
-                            speseSettimane[settimana] = [];
-                        }
-                        dati.speseSettimane[settimana].forEach(spesaId => {
-                            if (!speseSettimane[settimana].includes(spesaId)) {
-                                speseSettimane[settimana].push(spesaId);
-                            }
-                        });
+                    // Aggiorna il contatore spese
+                    if (dati.contatoreSpese > contatoreSpese) {
+                        contatoreSpese = dati.contatoreSpese;
                     }
                     
-                    // Aggiorna il contatore spese dal più alto ID trovato
-                    const maxId = Math.max(contatoreSpese, ...Object.keys(dati.speseDettagliate || {})
-                        .filter(id => id.includes('_'))
-                        .map(id => parseInt(id.split('_')[1]) || 0));
-                    if (maxId > contatoreSpese) {
-                        contatoreSpese = maxId;
+                    // Verifica che speseSettimane sia sincronizzato
+                    if (dati.speseSettimane && dati.speseSettimane[settimana]) {
+                        speseSettimane[settimana] = [...dati.speseSettimane[settimana]];
                     }
                 }
             } catch(e) {
@@ -1265,17 +1262,32 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
                 dati.speseExtra.push({ id, titolo, valore });
             });
             
+            // Salva tutte le spese dettagliate presenti nel DOM
             for (let settimana = 1; settimana <= 4; settimana++) {
-                if (speseSettimane[settimana]) {
-                    speseSettimane[settimana].forEach(spesaId => {
+                const container = document.getElementById(`expenses${settimana}`);
+                if (container) {
+                    const expenseItems = container.querySelectorAll('.expense-item');
+                    expenseItems.forEach(item => {
+                        const spesaId = item.id.replace('exp_', '');
                         const importo = getValue(`amt_${spesaId}`) || '0';
                         const desc = getValue(`desc_${spesaId}`) || '';
                         const categoria = getValue(`cat_${spesaId}`) || 'altro';
                         
                         dati.speseDettagliate[spesaId] = { importo, desc, categoria };
+                        
+                        // Assicurati che l'ID sia nell'array speseSettimane
+                        if (!speseSettimane[settimana]) {
+                            speseSettimane[settimana] = [];
+                        }
+                        if (!speseSettimane[settimana].includes(spesaId)) {
+                            speseSettimane[settimana].push(spesaId);
+                        }
                     });
                 }
             }
+            
+            // Debug: mostra cosa stiamo salvando
+            console.log('Salvando dati:', dati);
             
             return dati;
         }
