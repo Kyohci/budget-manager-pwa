@@ -743,6 +743,18 @@
                     contatoreSpese = dati.contatoreSpese || 0;
                     speseSettimane = dati.speseSettimane || { 1: [], 2: [], 3: [], 4: [] };
                     
+                    // Assicurati che il contatoreSpese sia aggiornato con l'ID più alto
+                    if (dati.speseDettagliate) {
+                        Object.keys(dati.speseDettagliate).forEach(spesaId => {
+                            if (spesaId.includes('_')) {
+                                const idNum = parseInt(spesaId.split('_')[1]);
+                                if (idNum > contatoreSpese) {
+                                    contatoreSpese = idNum;
+                                }
+                            }
+                        });
+                    }
+                    
                     if (dati.speseExtra && dati.speseExtra.length > 0) {
                         speseExtra = [];
                         const container = document.getElementById('speseExtra');
@@ -857,7 +869,8 @@
                         Object.keys(dati.speseDettagliate).forEach(spesaId => {
                             if (spesaId.startsWith(`w${settimana}_`)) {
                                 const spesaData = dati.speseDettagliate[spesaId];
-                                if (spesaData.importo !== '0' || spesaData.desc !== '') {
+                                // Carica anche le spese con importo 0 se hanno descrizione
+                                if (parseFloat(spesaData.importo) > 0 || spesaData.desc !== '') {
                                     creaNuovaSpesa(settimana, spesaId, spesaData);
                                     if (!speseSettimane[settimana]) {
                                         speseSettimane[settimana] = [];
@@ -869,9 +882,29 @@
                             }
                         });
                     }
+                    
+                    // Ricostruisci anche l'array speseSettimane dai dati salvati
+                    if (dati.speseSettimane && dati.speseSettimane[settimana]) {
+                        if (!speseSettimane[settimana]) {
+                            speseSettimane[settimana] = [];
+                        }
+                        dati.speseSettimane[settimana].forEach(spesaId => {
+                            if (!speseSettimane[settimana].includes(spesaId)) {
+                                speseSettimane[settimana].push(spesaId);
+                            }
+                        });
+                    }
+                    
+                    // Aggiorna il contatore spese dal più alto ID trovato
+                    const maxId = Math.max(contatoreSpese, ...Object.keys(dati.speseDettagliate || {})
+                        .filter(id => id.includes('_'))
+                        .map(id => parseInt(id.split('_')[1]) || 0));
+                    if (maxId > contatoreSpese) {
+                        contatoreSpese = maxId;
+                    }
                 }
             } catch(e) {
-                console.error('Errore caricamento spese:', e);
+                console.error('Errore caricamento spese settimana', settimana, ':', e);
             }
         }
         
@@ -887,9 +920,9 @@
             div.id = `exp_${spesaId}`;
             div.style.borderLeftColor = categoria.colore;
             div.innerHTML = `
-                <input type="number" class="expense-amount" id="amt_${spesaId}" placeholder="€" value="${data.importo}" oninput="ricalcolaSettimana()" step="0.01" min="0">
-                <input type="text" class="expense-desc" id="desc_${spesaId}" placeholder="Descrizione..." value="${data.desc}" oninput="salva()">
-                <select class="expense-category" id="cat_${spesaId}" onchange="cambiaCategoria('${spesaId}'); salva();">
+                <input type="number" class="expense-amount" id="amt_${spesaId}" placeholder="€" value="${data.importo}" oninput="ricalcolaSettimana(); salvaImmediato();" step="0.01" min="0">
+                <input type="text" class="expense-desc" id="desc_${spesaId}" placeholder="Descrizione..." value="${data.desc}" oninput="salvaImmediato();">
+                <select class="expense-category" id="cat_${spesaId}" onchange="cambiaCategoria('${spesaId}'); salvaImmediato();">
                     ${Object.keys(categorie).map(key => `<option value="${key}" ${key === data.categoria ? 'selected' : ''}>${categorie[key].nome}</option>`).join('')}
                 </select>
                 <button class="btn btn-remove" onclick="rimuoviSpesaWeek('${spesaId}', ${settimana})" title="Elimina spesa">X</button>
