@@ -853,7 +853,10 @@
                     </div>
                 `;
                 container.appendChild(weekCard);
-                
+            }
+            
+            // IMPORTANTE: Carica le spese DOPO aver creato la struttura DOM
+            for (let settimana = 1; settimana <= 4; settimana++) {
                 caricaSpeseSalvate(settimana);
             }
         }
