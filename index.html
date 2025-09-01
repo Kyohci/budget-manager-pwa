@@ -660,6 +660,9 @@
         let speseSettimane = { 1: [], 2: [], 3: [], 4: [] };
         let contatoreSpese = 0;
         
+        // Array globale per memorizzare tutti i dati delle spese
+        window.speseGlobali = {};
+        
         const categorie = {
             'alimentari': { nome: 'Alimentari', colore: '#4ade80' },
             'trasporti': { nome: 'Trasporti', colore: '#f59e0b' },
@@ -687,12 +690,17 @@
         }
         
         function cambiaMese(direction) {
-            salva();
+            // Salva prima di cambiare mese
+            salvaDatiCompleti();
+            
             currentMonth.setMonth(currentMonth.getMonth() + direction);
             aggiornaDisplayMese();
+            
+            // Carica i dati del nuovo mese
             caricaMese();
             calcola();
             
+            // Aggiorna la schermata corrente
             const currentScreen = document.querySelector('.screen.active').id;
             if (currentScreen === 'weeklyScreen') {
                 generaSettimane();
@@ -715,6 +723,9 @@
         }
         
         function goToPage(pagina) {
+            // Salva prima di cambiare pagina
+            salvaDatiCompleti();
+            
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(pagina).classList.add('active');
             
@@ -735,26 +746,21 @@
                 const salvati = localStorage.getItem(`budgetApp_${monthKey}`);
                 if (salvati) {
                     const dati = JSON.parse(salvati);
+                    console.log('Caricamento mese:', monthKey, dati);
                     
+                    // Carica dati base
                     if (dati.stipendio) setValue('stipendio', dati.stipendio);
                     if (dati.risparmi) setValue('risparmi', dati.risparmi);
                     
+                    // Ripristina contatori
                     contatore = dati.contatore || 1;
                     contatoreSpese = dati.contatoreSpese || 0;
                     speseSettimane = dati.speseSettimane || { 1: [], 2: [], 3: [], 4: [] };
                     
-                    // Assicurati che il contatoreSpese sia aggiornato con l'ID più alto
-                    if (dati.speseDettagliate) {
-                        Object.keys(dati.speseDettagliate).forEach(spesaId => {
-                            if (spesaId.includes('_')) {
-                                const idNum = parseInt(spesaId.split('_')[1]);
-                                if (idNum > contatoreSpese) {
-                                    contatoreSpese = idNum;
-                                }
-                            }
-                        });
-                    }
+                    // Carica array globale spese
+                    window.speseGlobali = dati.speseDettagliate || {};
                     
+                    // Carica spese extra
                     if (dati.speseExtra && dati.speseExtra.length > 0) {
                         speseExtra = [];
                         const container = document.getElementById('speseExtra');
@@ -765,13 +771,15 @@
                             div.className = 'custom-expense';
                             div.id = `spesa${spesa.id}`;
                             div.innerHTML = `
-                                <input type="text" class="title-input" id="titolo${spesa.id}" value="${spesa.titolo}" onchange="salva()">
+                                <input type="text" class="title-input" id="titolo${spesa.id}" value="${spesa.titolo}" onchange="salvaDatiCompleti()">
                                 <input type="number" class="value-input" id="valore${spesa.id}" value="${spesa.valore}" onchange="calcola()">
                                 <button class="btn btn-remove" onclick="rimuovi(${spesa.id})">X</button>
                             `;
                             container.appendChild(div);
                             speseExtra.push(spesa.id);
                         });
+                    } else {
+                        resetDatiDefault();
                     }
                     
                     return true;
@@ -779,6 +787,7 @@
                     resetDatiDefault();
                 }
             } catch(e) {
+                console.error('Errore caricamento:', e);
                 resetDatiDefault();
             }
             return false;
@@ -791,7 +800,7 @@
             const container = document.getElementById('speseExtra');
             container.innerHTML = `
                 <div class="custom-expense">
-                    <input type="text" class="title-input" id="titolo1" placeholder="Es: Auto..." value="Auto" onchange="salva()">
+                    <input type="text" class="title-input" id="titolo1" placeholder="Es: Auto..." value="Auto" onchange="salvaDatiCompleti()">
                     <input type="number" class="value-input" id="valore1" value="500" onchange="calcola()">
                     <button class="btn btn-remove" onclick="rimuovi(1)">X</button>
                 </div>
@@ -802,6 +811,7 @@
             budgetBase = 275;
             speseSettimane = { 1: [], 2: [], 3: [], 4: [] };
             contatoreSpese = 0;
+            window.speseGlobali = {};
         }
         
         function calcola() {
@@ -825,7 +835,7 @@
             if (budgetWeekEl) budgetWeekEl.textContent = `€${budgetBase.toFixed(2)}`;
             
             aggiornaCalcoliSettimane();
-            salva();
+            salvaDatiCompleti();
         }
         
         function generaSettimane() {
@@ -853,74 +863,37 @@
                     </div>
                 `;
                 container.appendChild(weekCard);
-            }
-            
-            // IMPORTANTE: Carica le spese DOPO aver creato la struttura DOM
-            for (let settimana = 1; settimana <= 4; settimana++) {
+                
+                // Carica le spese salvate per questa settimana
                 caricaSpeseSalvate(settimana);
             }
         }
         
         function caricaSpeseSalvate(settimana) {
-            const monthKey = getMonthKey();
+            console.log(`Caricando spese per settimana ${settimana}`);
+            console.log('Array globale corrente:', window.speseGlobali);
+            console.log('Spese settimane:', speseSettimane);
             
-            try {
-                const salvati = localStorage.getItem(`budgetApp_${monthKey}`);
-                console.log(`Caricando settimana ${settimana}, dati trovati:`, salvati ? 'SI' : 'NO');
-                
-                if (salvati) {
-                    const dati = JSON.parse(salvati);
-                    console.log(`Dati completi per settimana ${settimana}:`, dati);
-                    
-                    // Inizializza l'array globale se non esiste
-                    if (!window.speseGlobali) {
-                        window.speseGlobali = {};
+            if (speseSettimane[settimana] && speseSettimane[settimana].length > 0) {
+                speseSettimane[settimana].forEach(spesaId => {
+                    const spesaData = window.speseGlobali[spesaId];
+                    if (spesaData) {
+                        console.log(`Caricando spesa ${spesaId}:`, spesaData);
+                        creaNuovaSpesa(settimana, spesaId, spesaData);
+                    } else {
+                        console.log(`Dati mancanti per spesa ${spesaId}, creo vuota`);
+                        creaNuovaSpesa(settimana, spesaId, { importo: '0', desc: '', categoria: 'altro' });
                     }
-                    
-                    if (dati.speseDettagliate) {
-                        console.log(`Spese dettagliate trovate:`, Object.keys(dati.speseDettagliate));
-                        
-                        Object.keys(dati.speseDettagliate).forEach(spesaId => {
-                            if (spesaId.startsWith(`w${settimana}_`)) {
-                                const spesaData = dati.speseDettagliate[spesaId];
-                                console.log(`Caricando spesa ${spesaId}:`, spesaData);
-                                
-                                // Aggiungi all'array globale
-                                window.speseGlobali[spesaId] = spesaData;
-                                
-                                // Carica tutte le spese, anche quelle con importo 0
-                                creaNuovaSpesa(settimana, spesaId, spesaData);
-                                
-                                if (!speseSettimane[settimana]) {
-                                    speseSettimane[settimana] = [];
-                                }
-                                if (!speseSettimane[settimana].includes(spesaId)) {
-                                    speseSettimane[settimana].push(spesaId);
-                                }
-                            }
-                        });
-                    }
-                    
-                    // Aggiorna il contatore spese
-                    if (dati.contatoreSpese > contatoreSpese) {
-                        contatoreSpese = dati.contatoreSpese;
-                    }
-                    
-                    // Verifica che speseSettimane sia sincronizzato
-                    if (dati.speseSettimane && dati.speseSettimane[settimana]) {
-                        speseSettimane[settimana] = [...dati.speseSettimane[settimana]];
-                    }
-                    
-                    console.log('Array globale aggiornato:', window.speseGlobali);
-                }
-            } catch(e) {
-                console.error('Errore caricamento spese settimana', settimana, ':', e);
+                });
             }
         }
         
         function creaNuovaSpesa(settimana, spesaId, spesaData = null) {
             const container = document.getElementById(`expenses${settimana}`);
-            if (!container) return;
+            if (!container) {
+                console.error(`Container expenses${settimana} non trovato`);
+                return;
+            }
             
             const data = spesaData || { importo: '0', desc: '', categoria: 'altro' };
             const categoria = categorie[data.categoria] || categorie['altro'];
@@ -930,30 +903,59 @@
             div.id = `exp_${spesaId}`;
             div.style.borderLeftColor = categoria.colore;
             div.innerHTML = `
-                <input type="number" class="expense-amount" id="amt_${spesaId}" placeholder="€" value="${data.importo}" oninput="ricalcolaSettimana(); salvaImmediato();" step="0.01" min="0">
-                <input type="text" class="expense-desc" id="desc_${spesaId}" placeholder="Descrizione..." value="${data.desc}" oninput="salvaImmediato();">
-                <select class="expense-category" id="cat_${spesaId}" onchange="cambiaCategoria('${spesaId}'); salvaImmediato();">
+                <input type="number" class="expense-amount" id="amt_${spesaId}" placeholder="€" value="${data.importo}" oninput="aggiornaSpesaGlobale('${spesaId}'); ricalcolaSettimana();" step="0.01" min="0">
+                <input type="text" class="expense-desc" id="desc_${spesaId}" placeholder="Descrizione..." value="${data.desc}" oninput="aggiornaSpesaGlobale('${spesaId}');">
+                <select class="expense-category" id="cat_${spesaId}" onchange="cambiaCategoria('${spesaId}'); aggiornaSpesaGlobale('${spesaId}');">
                     ${Object.keys(categorie).map(key => `<option value="${key}" ${key === data.categoria ? 'selected' : ''}>${categorie[key].nome}</option>`).join('')}
                 </select>
                 <button class="btn btn-remove" onclick="rimuoviSpesaWeek('${spesaId}', ${settimana})" title="Elimina spesa">X</button>
             `;
             container.appendChild(div);
+            
+            console.log(`Spesa ${spesaId} creata nel DOM per settimana ${settimana}`);
+        }
+        
+        function aggiornaSpesaGlobale(spesaId) {
+            const importo = getValue(`amt_${spesaId}`) || '0';
+            const desc = getValue(`desc_${spesaId}`) || '';
+            const categoria = getValue(`cat_${spesaId}`) || 'altro';
+            
+            window.speseGlobali[spesaId] = { importo, desc, categoria };
+            console.log(`Aggiornata spesa globale ${spesaId}:`, window.speseGlobali[spesaId]);
+            
+            // Salvataggio automatico con debounce
+            clearTimeout(window.saveTimeout);
+            window.saveTimeout = setTimeout(salvaDatiCompleti, 500);
         }
         
         function aggiungiSpesaWeek(settimana) {
             contatoreSpese++;
             const spesaId = `w${settimana}_${contatoreSpese}`;
             
+            console.log(`Aggiungendo nuova spesa: ${spesaId} per settimana ${settimana}`);
+            
+            // Aggiungi all'array delle settimane
             if (!speseSettimane[settimana]) {
                 speseSettimane[settimana] = [];
             }
-            
             speseSettimane[settimana].push(spesaId);
+            
+            // Crea la spesa vuota nell'array globale
+            window.speseGlobali[spesaId] = { importo: '0', desc: '', categoria: 'altro' };
+            
+            // Crea l'elemento DOM
             creaNuovaSpesa(settimana, spesaId);
-            salvaImmediato();
+            
+            // Salva immediatamente
+            salvaDatiCompleti();
+            
+            console.log('Nuove speseSettimane:', speseSettimane);
+            console.log('Nuovo array globale:', window.speseGlobali);
         }
         
         function rimuoviSpesaWeek(spesaId, settimana) {
+            console.log(`Rimozione spesa ${spesaId} da settimana ${settimana}`);
+            
             const div = document.getElementById(`exp_${spesaId}`);
             if (!div) return;
             
@@ -962,12 +964,23 @@
             div.style.transform = 'translateX(-20px)';
             
             setTimeout(() => {
+                // Rimuovi dal DOM
                 div.remove();
+                
+                // Rimuovi dall'array delle settimane
                 if (speseSettimane[settimana]) {
                     speseSettimane[settimana] = speseSettimane[settimana].filter(id => id !== spesaId);
                 }
+                
+                // Rimuovi dall'array globale
+                delete window.speseGlobali[spesaId];
+                
+                console.log(`Spesa ${spesaId} rimossa. Nuove speseSettimane:`, speseSettimane);
+                console.log('Nuovo array globale:', window.speseGlobali);
+                
+                // Ricalcola e salva
                 aggiornaCalcoliSettimane();
-                salva();
+                salvaDatiCompleti();
             }, 300);
         }
         
@@ -991,19 +1004,20 @@
         
         function ricalcolaSettimana() {
             aggiornaCalcoliSettimane();
-            salva();
         }
         
         function calcolaTotaleSettimana(settimana) {
             let totale = 0;
-            const container = document.getElementById(`expenses${settimana}`);
-            if (!container) return 0;
             
-            const inputs = container.querySelectorAll('.expense-amount');
-            inputs.forEach(input => {
-                const valore = parseFloat(input.value) || 0;
-                totale += valore;
-            });
+            if (speseSettimane[settimana]) {
+                speseSettimane[settimana].forEach(spesaId => {
+                    const spesaData = window.speseGlobali[spesaId];
+                    if (spesaData) {
+                        const importo = parseFloat(spesaData.importo) || 0;
+                        totale += importo;
+                    }
+                });
+            }
             
             return totale;
         }
@@ -1055,29 +1069,6 @@
             }
         }
         
-        function aggiornaBudgetSettimana(settimana, budget, speso) {
-            const saldo = budget - speso;
-            
-            const weekBudgetEl = document.getElementById(`weekBudget${settimana}`);
-            const weekSpentEl = document.getElementById(`weekSpent${settimana}`);
-            const weekBalanceEl = document.getElementById(`weekBalance${settimana}`);
-            
-            if (weekBudgetEl) {
-                weekBudgetEl.textContent = `€${budget.toFixed(2)}`;
-                weekBudgetEl.className = `week-budget ${budget < budgetBase ? 'negative' : 'positive'}`;
-            }
-            
-            if (weekSpentEl) {
-                weekSpentEl.textContent = `€${speso.toFixed(2)}`;
-                weekSpentEl.className = speso > budget ? 'negative' : 'positive';
-            }
-            
-            if (weekBalanceEl) {
-                weekBalanceEl.textContent = `€${saldo.toFixed(2)}`;
-                weekBalanceEl.className = saldo < 0 ? 'negative' : 'positive';
-            }
-        }
-        
         function aggiungiNuova() {
             contatore++;
             const id = contatore;
@@ -1086,7 +1077,7 @@
             div.className = 'custom-expense';
             div.id = `spesa${id}`;
             div.innerHTML = `
-                <input type="text" class="title-input" id="titolo${id}" placeholder="Es: Affitto..." onchange="salva()">
+                <input type="text" class="title-input" id="titolo${id}" placeholder="Es: Affitto..." onchange="salvaDatiCompleti()">
                 <input type="number" class="value-input" id="valore${id}" value="0" onchange="calcola()">
                 <button class="btn btn-remove" onclick="rimuovi(${id})">X</button>
             `;
@@ -1171,26 +1162,9 @@
         
         function resetMese() {
             if (confirm('Sei sicuro di voler resettare tutti i dati del mese corrente?')) {
-                setValue('stipendio', '2000');
-                setValue('risparmi', '400');
-                
-                const container = document.getElementById('speseExtra');
-                container.innerHTML = `
-                    <div class="custom-expense">
-                        <input type="text" class="title-input" id="titolo1" placeholder="Es: Auto..." value="Auto" onchange="salva()">
-                        <input type="number" class="value-input" id="valore1" value="500" onchange="calcola()">
-                        <button class="btn btn-remove" onclick="rimuovi(1)">X</button>
-                    </div>
-                `;
-                
-                contatore = 1;
-                speseExtra = [1];
-                budgetBase = 275;
-                speseSettimane = { 1: [], 2: [], 3: [], 4: [] };
-                contatoreSpese = 0;
-                
+                resetDatiDefault();
                 calcola();
-                salva();
+                salvaDatiCompleti();
                 alert('Mese resettato!');
             }
         }
@@ -1255,66 +1229,32 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
             alert(`Report per ${meseCorrente} esportato!`);
         }
         
-        function generaDatiCompleti() {
-            console.log('=== INIZIO GENERAZIONE DATI ===');
-            
+        function salvaDatiCompleti() {
             const dati = {
-                versione: '3.0',
+                versione: '3.1',
                 meseChiave: getMonthKey(),
                 stipendio: getValue('stipendio'),
                 risparmi: getValue('risparmi'),
                 speseExtra: [],
                 contatore: contatore,
                 speseSettimane: speseSettimane,
-                speseDettagliate: {},
+                speseDettagliate: { ...window.speseGlobali },
                 contatoreSpese: contatoreSpese,
                 timestamp: new Date().toISOString()
             };
             
+            // Salva le spese extra
             speseExtra.forEach(id => {
                 const titolo = getValue(`titolo${id}`);
                 const valore = getValue(`valore${id}`);
                 dati.speseExtra.push({ id, titolo, valore });
             });
             
-            // Usa l'array globale delle spese invece del DOM
-            if (window.speseGlobali) {
-                console.log('Usando speseGlobali:', window.speseGlobali);
-                dati.speseDettagliate = { ...window.speseGlobali };
-            } else {
-                console.log('speseGlobali non trovato, provo il DOM...');
-                // Fallback: prova il DOM solo se i container esistono
-                for (let settimana = 1; settimana <= 4; settimana++) {
-                    const container = document.getElementById(`expenses${settimana}`);
-                    if (container) {
-                        const expenseItems = container.querySelectorAll('.expense-item');
-                        console.log(`Trovati ${expenseItems.length} expense-item in settimana ${settimana}`);
-                        
-                        expenseItems.forEach((item, index) => {
-                            const spesaId = item.id.replace('exp_', '');
-                            const importo = getValue(`amt_${spesaId}`) || '0';
-                            const desc = getValue(`desc_${spesaId}`) || '';
-                            const categoria = getValue(`cat_${spesaId}`) || 'altro';
-                            
-                            dati.speseDettagliate[spesaId] = { importo, desc, categoria };
-                        });
-                    }
-                }
-            }
-            
-            console.log('=== DATI FINALI GENERATI ===');
-            console.log('Spese dettagliate:', dati.speseDettagliate);
-            console.log('Numero spese dettagliate:', Object.keys(dati.speseDettagliate).length);
-            
-            return dati;
-        }
-        
-        function salva() {
-            const dati = generaDatiCompleti();
             const monthKey = getMonthKey();
             
             try {
                 localStorage.setItem(`budgetApp_${monthKey}`, JSON.stringify(dati));
+                console.log(`Dati salvati per ${monthKey}:`, dati);
                 return true;
             } catch(e) {
                 console.error('Errore salvataggio:', e);
@@ -1322,15 +1262,19 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
             }
         }
         
-        function salvaImmediato() {
-            setTimeout(salva, 100);
-        }
-        
         // Inizializzazione
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== INIZIALIZZAZIONE APP ===');
+            
+            // Inizializza l'array globale
+            window.speseGlobali = {};
+            
             aggiornaDisplayMese();
             caricaMese();
             calcola();
+            
+            console.log('App inizializzata. Array globale:', window.speseGlobali);
+            console.log('Spese settimane:', speseSettimane);
             
             // Registra Service Worker per PWA
             if ('serviceWorker' in navigator) {
@@ -1344,12 +1288,25 @@ Budget settimanale medio: EUR${budgetBase.toFixed(2)}
             }
         });
         
-        // Salvataggio automatico
-        window.addEventListener('beforeunload', salva);
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) salva();
+        // Salvataggio automatico prima di chiudere
+        window.addEventListener('beforeunload', function() {
+            console.log('Salvataggio prima di chiudere...');
+            salvaDatiCompleti();
         });
-        setInterval(salva, 30000);
+        
+        // Salvataggio quando l'app va in background
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('App in background, salvataggio...');
+                salvaDatiCompleti();
+            }
+        });
+        
+        // Salvataggio automatico ogni 30 secondi
+        setInterval(function() {
+            console.log('Salvataggio automatico...');
+            salvaDatiCompleti();
+        }, 30000);
     </script>
 </body>
 </html>
