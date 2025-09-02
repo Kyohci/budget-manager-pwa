@@ -1208,21 +1208,15 @@
         }
         
         function resetDatiDefault() {
-            setValue('stipendio', '2000');
-            setValue('risparmi', '400');
+            setValue('stipendio', '0');
+            setValue('risparmi', '0');
             
             const container = document.getElementById('speseExtra');
-            container.innerHTML = `
-                <div class="custom-expense">
-                    <input type="text" class="title-input" id="titolo1" placeholder="Es: Auto..." value="Auto" onchange="salvaDatiCompleti()">
-                    <input type="number" class="value-input" id="valore1" value="500" onchange="calcola()">
-                    <button class="btn btn-remove" onclick="rimuovi(1)">X</button>
-                </div>
-            `;
+            container.innerHTML = '';
             
-            contatore = 1;
-            speseExtra = [1];
-            budgetBase = 275;
+            contatore = 0;
+            speseExtra = [];
+            budgetBase = 0;
             speseSettimane = { 1: [], 2: [], 3: [], 4: [] };
             contatoreSpese = 0;
             window.speseGlobali = {};
@@ -1240,13 +1234,19 @@
             
             const speseFisse = risparmi + totaleExtra;
             const budgetDisponibile = stipendio - speseFisse;
-            budgetBase = budgetDisponibile / 4;
+            budgetBase = budgetDisponibile > 0 ? budgetDisponibile / 4 : 0;
             
             const budgetMensileEl = document.getElementById('budgetMensile');
             const budgetWeekEl = document.getElementById('budgetWeek');
             
-            if (budgetMensileEl) budgetMensileEl.textContent = `€${budgetDisponibile.toFixed(2)}`;
-            if (budgetWeekEl) budgetWeekEl.textContent = `€${budgetBase.toFixed(2)}`;
+            if (budgetMensileEl) {
+                budgetMensileEl.textContent = `€${budgetDisponibile.toFixed(2)}`;
+                budgetMensileEl.className = `result-value ${budgetDisponibile < 0 ? 'negative' : ''}`;
+            }
+            if (budgetWeekEl) {
+                budgetWeekEl.textContent = `€${budgetBase.toFixed(2)}`;
+                budgetWeekEl.className = `result-value ${budgetBase < 0 ? 'negative' : ''}`;
+            }
             
             aggiornaCalcoliSettimane();
             salvaDatiCompleti();
@@ -1537,21 +1537,48 @@
             div.className = 'custom-expense';
             div.id = `spesa${id}`;
             div.innerHTML = `
-                <input type="text" class="title-input" id="titolo${id}" placeholder="Es: Affitto..." onchange="salvaDatiCompleti()">
+                <input type="text" class="title-input" id="titolo${id}" placeholder="Es: Affitto, Auto..." onchange="salvaDatiCompleti()">
                 <input type="number" class="value-input" id="valore${id}" value="0" onchange="calcola()">
                 <button class="btn btn-remove" onclick="rimuovi(${id})">X</button>
             `;
             
             document.getElementById('speseExtra').appendChild(div);
             speseExtra.push(id);
+            aggiornaInterfacciaSpese();
             calcola();
         }
         
-        function rimuovi(id) {
-            if (speseExtra.length <= 1) {
-                alert('Devi mantenere almeno una spesa fissa');
-                return;
+        function aggiornaInterfacciaSpese() {
+            const container = document.getElementById('speseExtra');
+            const addButton = document.querySelector('.btn-add');
+            
+            if (speseExtra.length === 0) {
+                // Mostra messaggio se non ci sono spese
+                if (!document.getElementById('noSpeseMessage')) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.id = 'noSpeseMessage';
+                    messageDiv.style.cssText = `
+                        text-align: center;
+                        padding: 20px;
+                        color: #666;
+                        font-style: italic;
+                        background: rgba(102, 126, 234, 0.1);
+                        border-radius: 15px;
+                        margin: 10px 0;
+                    `;
+                    messageDiv.innerHTML = '📝 Nessuna spesa fissa configurata<br><small>Clicca il pulsante sotto per aggiungerne una</small>';
+                    container.appendChild(messageDiv);
+                }
+            } else {
+                // Rimuovi il messaggio se ci sono spese
+                const message = document.getElementById('noSpeseMessage');
+                if (message) {
+                    message.remove();
+                }
             }
+        }
+        
+        function rimuovi(id) {
             const div = document.getElementById(`spesa${id}`);
             if (div) {
                 div.style.transition = 'all 0.3s ease';
@@ -1561,6 +1588,7 @@
                 setTimeout(() => {
                     div.remove();
                     speseExtra = speseExtra.filter(item => item !== id);
+                    aggiornaInterfacciaSpese();
                     calcola();
                 }, 300);
             }
@@ -1857,7 +1885,14 @@ Generato da Budget Manager Pro
             // Nascondi la home inizialmente
             homeScreen.style.opacity = '0';
             
-            // Dopo 3 secondi, inizia l'animazione di uscita
+            // Controlla se l'app è stata avviata come PWA
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                                window.navigator.standalone === true;
+            
+            // Riduce il tempo se è PWA per evitare sovrapposizione
+            const splashDuration = isStandalone ? 1500 : 3000;
+            
+            // Dopo il tempo stabilito, inizia l'animazione di uscita
             setTimeout(() => {
                 // Fase 1: Gli elementi si trasformano in bolle
                 setTimeout(() => {
@@ -1874,7 +1909,7 @@ Generato da Budget Manager Pro
                         animateHomeEntrance();
                     }, 500);
                 }, 100);
-            }, 3000);
+            }, splashDuration);
         }
         
         function animateHomeEntrance() {
